@@ -14,6 +14,7 @@ pages
 screenshots
 
 # BPS
+aedc_logo.png
 bps_logo.png
 ecg_logo.png
 requirementss.txt
@@ -27,3 +28,6 @@ logo
 ecg_connection.py
 dq.py
 dq_analysis.ipynb
+
+__pycache__
+.pyc
