@@ -1,2 +1,2 @@
 # dq-performance-dashboard
-Dashboard to keep track of the performance of the Data Quality performance
+Dashboard to keep track of the Data Quality Performance
