@@ -5,7 +5,7 @@ import datetime
 
 from modules.ecg_connection import get_ecg_ex_cus_data_from_database, get_ecg_nw_cus_data_from_database
 from modules.menu import streamlit_menu, filter_data
-from modules.metrics import display_kpi_metrics, display_table_metrics
+from modules.metrics import display_kpi_metrics
 from modules.header import dashboard_header
 from modules.data import show_raw_data
 
@@ -90,7 +90,7 @@ ecg_df_selection = ecg_df.query(
 def ecg():
 	dashboard_header(image1 = Image.open("bps_logo.png"), image2 = Image.open("ecg_logo.png"), title="ECG Dashboard")
 	display_kpi_metrics(ecg_df, ecg_df_selection)
-	display_table_metrics(ecg_df, ecg_df_selection)
+	# display_table_metrics(ecg_df, ecg_df_selection)
 	show_raw_data(ecg_df_selection)
 
 	#Display Filters
