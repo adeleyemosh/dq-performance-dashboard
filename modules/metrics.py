@@ -52,6 +52,9 @@ def display_kpi_metrics(df, df_selection):
 
 	main_tab, filtered_tab = st.tabs(["Main", "Filtered"])
 
+	#--------------------------------------------------------#
+	#------------------------- MAIN -------------------------#
+	#--------------------------------------------------------#
 	with main_tab:
 		st.markdown("<div style='text-align:left; font-size:25px; font-weight:bold;'>Main</div>", unsafe_allow_html=True)
 		# st.markdown("""---""")
@@ -146,6 +149,9 @@ def display_kpi_metrics(df, df_selection):
 			st.markdown("<div style='text-align:center; font-size:20px; font-weight:bold;'>Overall Customers and Buildings By Asset Status (Weekly)</div>", unsafe_allow_html=True)
 			st.dataframe(weekly_results, use_container_width=st.session_state.use_main_container_width)
 
+	#--------------------------------------------------------#
+	#----------------------- FILTERED -----------------------#
+	#--------------------------------------------------------#
 	with filtered_tab:
 		st.markdown("<div style='text-align:left; font-size:25px; font-weight:bold;'>Filtered</div>", unsafe_allow_html=True)
 		st.markdown("<div style='text-align:left; font-size:15px; font-weight:bold; font-style:italic;'>Figures here can be sliced and diced!</div>", unsafe_allow_html=True)

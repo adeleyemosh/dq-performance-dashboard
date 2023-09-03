@@ -50,10 +50,20 @@ ecg_df = ecg_df[
     (~ecg_df['validated_by'].isin(invalid_validators))
 ]
 
+# Function to calculate the week-month value
+def calculate_week_month(row):
+    if pd.isnull(row['validated_date']):
+        return "N/A"  # Handle missing dates
+    week_number = row['validated_date'].week - (pd.to_datetime(row['validated_date']).to_period('M').start_time.week - 1)
+    month_name = row['validated_date'].strftime('%B')
+    return f"Week {week_number} - {month_name}"
+
+
 ecg_df["validated_date"] = pd.to_datetime(ecg_df["validated_date"])
 ecg_df["val_date"] = ecg_df["validated_date"].dt.strftime('%Y-%m-%d')
 ecg_df['year'] = pd.DatetimeIndex(ecg_df['validated_date']).year
 ecg_df['month'] = pd.DatetimeIndex(ecg_df['validated_date']).month  
+ecg_df['week_month'] = ecg_df.apply(calculate_week_month, axis=1)
 
 validated_by = ecg_df["validated_by"]
 source_tag = ecg_df["customer_status"]
