@@ -90,7 +90,6 @@ ecg_df_selection = ecg_df.query(
 def ecg():
 	dashboard_header(image1 = Image.open("bps_logo.png"), image2 = Image.open("ecg_logo.png"), title="ECG Dashboard")
 	display_kpi_metrics(ecg_df, ecg_df_selection)
-	# display_table_metrics(ecg_df, ecg_df_selection)
 	show_raw_data(ecg_df_selection)
 
 	#Display Filters

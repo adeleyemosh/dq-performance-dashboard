@@ -75,7 +75,7 @@ def display_kpi_metrics(df, df_selection):
 
 		st.markdown("""---""")  
 
-		st.checkbox("Use container width", value=True, key="use_container_width")
+		st.checkbox("Use container width", value=True, key="use_main_container_width")
 		c1, c2 = st.columns((4,6))
 		with c1:
 
@@ -96,7 +96,7 @@ def display_kpi_metrics(df, df_selection):
 
 			# Display the pivot table
 			st.markdown("<div style='text-align:center; font-size:20px; font-weight:bold;'>Overall Customers and Buildings By Asset Status</div>", unsafe_allow_html=True)
-			st.dataframe(source_pivot, use_container_width=st.session_state.use_container_width)
+			st.dataframe(source_pivot, use_container_width=st.session_state.use_main_container_width)
 
 
 		with c2:
@@ -144,7 +144,7 @@ def display_kpi_metrics(df, df_selection):
 
 			# Display the results in a Streamlit table
 			st.markdown("<div style='text-align:center; font-size:20px; font-weight:bold;'>Overall Customers and Buildings By Asset Status (Weekly)</div>", unsafe_allow_html=True)
-			st.dataframe(weekly_results, use_container_width=st.session_state.use_container_width)
+			st.dataframe(weekly_results, use_container_width=st.session_state.use_main_container_width)
 
 	with filtered_tab:
 		st.markdown("<div style='text-align:left; font-size:25px; font-weight:bold;'>Filtered</div>", unsafe_allow_html=True)
@@ -173,8 +173,8 @@ def display_kpi_metrics(df, df_selection):
 		c1, c2 = st.columns((4,6))
 		with c1:
 			# Filter the DataFrame for Approved and Rejected rows
-			approved_df = df[df['approval_status'] == 'Approved']
-			rejected_df = df[df['approval_status'] == 'Rejected']
+			approved_df = df_selection[df_selection['approval_status'] == 'Approved']
+			rejected_df = df_selection[df_selection['approval_status'] == 'Rejected']
 
 			if df_selection is None:
 				st.markdown("#### Figures by Field Enumerator (No data available)")
