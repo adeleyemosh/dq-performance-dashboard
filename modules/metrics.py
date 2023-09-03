@@ -103,47 +103,87 @@ def display_kpi_metrics(df, df_selection):
 
 
 		with c2:
-			df['validated_date'] = pd.to_datetime(df['validated_date'])
+			def calculate_week_month_metric(df, period):
+				# Filter the DataFrame for the current and previous months
+				filtered_df = df[
+					(df['validated_date'].dt.month == period) 
+				]
 
-			# Filter the DataFrame for the current month
-			current_month = datetime.datetime.now().month
-			filtered_df = df[df['validated_date'].dt.month == current_month]
+				# Calculate distinct counts for 'Approved' and 'Rejected'
+				approved_counts = filtered_df[filtered_df['approval_status'] == 'Approved'].groupby(['validated_by', 'week_month'])['ac_no'].nunique()
+				rejected_counts = filtered_df[filtered_df['approval_status'] == 'Rejected'].groupby(['validated_by', 'week_month'])['ac_no'].nunique()
 
-			# Create a date range for the current month
-			start_date = datetime.datetime(datetime.datetime.now().year, current_month, 1)
-			end_date = start_date + timedelta(days=30)  # Adjust the number of days as needed
-			date_range = pd.date_range(start=start_date, end=end_date, freq='W-MON')
+				# Fill missing values with 0
+				approved_counts = approved_counts.unstack().fillna(0)
+				rejected_counts = rejected_counts.unstack().fillna(0)
 
-			# Initialize an empty list to store weekly DataFrames
-			weekly_dfs = []
+				pivot_ac_no_slrn = filtered_df.pivot_table(
+					index='validated_by',
+					columns='week_month',
+					values=['ac_no', 'slrn'],
+					aggfunc={'ac_no': pd.Series.nunique, 'slrn': 'nunique'},
+					fill_value=0,
+					margins=True,
+					margins_name='Grand Total'
+				)
 
-			# Iterate through the date range and calculate counts for each week
-			for i in range(len(date_range) - 1):
-				week_start = date_range[i]
-				week_end = date_range[i + 1]
+				pivot_approved_rejected = pd.concat([
+					approved_counts,
+					rejected_counts
+				], keys=['Approved', 'Rejected'], axis=1)
+
+				# Combine the two pivot tables
+				pivot = pd.concat([pivot_ac_no_slrn, pivot_approved_rejected], axis=1)
+
+				pivot = pivot.rename_axis(index={'week_month': 'Week - Month', 'validated_by': 'Validator'})
+				pivot = pivot.rename(columns={'ac_no': 'Customers', 'slrn': 'Buildings'})
+
+				return pivot
+			# df['validated_date'] = pd.to_datetime(df['validated_date'])
+
+			# # Filter the DataFrame for the current month
+			# current_month = datetime.datetime.now().month
+			# filtered_df = df[df['validated_date'].dt.month == current_month]
+
+			# # Create a date range for the current month
+			# start_date = datetime.datetime(datetime.datetime.now().year, current_month, 1)
+			# end_date = start_date + timedelta(days=30)  # Adjust the number of days as needed
+			# date_range = pd.date_range(start=start_date, end=end_date, freq='W-MON')
+
+			# # Initialize an empty list to store weekly DataFrames
+			# weekly_dfs = []
+
+			# # Iterate through the date range and calculate counts for each week
+			# for i in range(len(date_range) - 1):
+			# 	week_start = date_range[i]
+			# 	week_end = date_range[i + 1]
 				
-				week_df = filtered_df[(filtered_df['validated_date'] >= week_start) & (filtered_df['validated_date'] < week_end)]
+			# 	week_df = filtered_df[(filtered_df['validated_date'] >= week_start) & (filtered_df['validated_date'] < week_end)]
 				
-				# Filter the DataFrame for Approved and Rejected rows
-				approved_df = week_df[week_df['approval_status'] == 'Approved']
-				rejected_df = week_df[week_df['approval_status'] == 'Rejected']
+			# 	# Filter the DataFrame for Approved and Rejected rows
+			# 	approved_df = week_df[week_df['approval_status'] == 'Approved']
+			# 	rejected_df = week_df[week_df['approval_status'] == 'Rejected']
 				
-				# Calculate the unique counts for Customers and Buildings for each 'validated_by'
-				source_pivot = week_df.pivot_table(index="validated_by", values=['slrn', 'ac_no'], aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total')
-				source_pivot = source_pivot.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
+			# 	# Calculate the unique counts for Customers and Buildings for each 'validated_by'
+			# 	source_pivot = week_df.pivot_table(index="validated_by", values=['slrn', 'ac_no'], aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total')
+			# 	source_pivot = source_pivot.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
 				
-				# Calculate the unique counts for Approved and Rejected
-				source_pivot['Approved'] = approved_df.groupby('validated_by')['ac_no'].nunique()
-				source_pivot['Rejected'] = rejected_df.groupby('validated_by')['ac_no'].nunique()
+			# 	# Calculate the unique counts for Approved and Rejected
+			# 	source_pivot['Approved'] = approved_df.groupby('validated_by')['ac_no'].nunique()
+			# 	source_pivot['Rejected'] = rejected_df.groupby('validated_by')['ac_no'].nunique()
 				
-				# Fill NaN values with 0
-				source_pivot = source_pivot.fillna(0)
+			# 	# Fill NaN values with 0
+			# 	source_pivot = source_pivot.fillna(0)
 				
-				# Append the week's DataFrame to the list
-				weekly_dfs.append(source_pivot)
+			# 	# Append the week's DataFrame to the list
+			# 	weekly_dfs.append(source_pivot)
 
 			# Merge the weekly DataFrames based on 'validated_by'
-			weekly_results = pd.concat(weekly_dfs)
+			current_month = datetime.datetime.now().month
+			previous_month = (datetime.datetime.now().month - 2) % 12 + 1  # Adjust for January
+			weekly_results = calculate_week_month_metric(df, previous_month)
+			weekly_results
+			# weekly_results = pd.concat(weekly_dfs)
 
 			# Display the results in a Streamlit table
 			st.markdown("<div style='text-align:center; font-size:20px; font-weight:bold;'>Overall Customers and Buildings By Asset Status (Weekly)</div>", unsafe_allow_html=True)
