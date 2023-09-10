@@ -55,12 +55,12 @@ ecg_df["val_date"] = ecg_df["validated_date"].dt.strftime('%Y-%m-%d')
 ecg_df['year'] = pd.DatetimeIndex(ecg_df['validated_date']).year
 ecg_df['month'] = pd.DatetimeIndex(ecg_df['validated_date']).month  
 
-validated_by = ecg_df["validated_by"]
+validated_by_ref = ecg_df["validated_by"]
 source_tag = ecg_df["customer_status"]
-year = ecg_df['year']
-month = ecg_df['month']
-region = ecg_df['region']
-district = ecg_df['district']
+year_ref = ecg_df['year']
+month_ref = ecg_df['month']
+region_ref = ecg_df['region']
+district_ref = ecg_df['district']
 
 
 today = datetime.datetime.now().date()
@@ -73,13 +73,13 @@ date_range_start = date_range_start.strftime('%Y-%m-%d')
 date_range_end = date_range_end.strftime('%Y-%m-%d')
 
 ecg_df_selection = ecg_df.query(
-    "validated_by == @validated_by & "
+    "validated_by == @validated_by_ref & "
     "customer_status == @source_tag &"
-    "year == @year & "
-    "month == @month & "
+    "year == @year_ref & "
+    "month == @month_ref & "
     "@date_range_start <= val_date <= @date_range_end & "
-    "region == @region & "
-    "district == @district"
+    "region == @region_ref & "
+    "district == @district_ref"
 )
 
 
