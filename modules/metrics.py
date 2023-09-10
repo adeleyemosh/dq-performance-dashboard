@@ -238,34 +238,88 @@ def display_kpi_metrics(df, df_selection):
 					use_container_width=st.session_state.use_filtered_container_width
 				)
 
-
-		with c2:
-			if df_selection is None:
-				st.markdown("#### (No data available)")
-			else:
-				weekly_perf = df_selection.pivot_table(
+		
+		
+		with c2: 
+			def calculate_weekly_performance(filtered_data):
+				weekly_perf = filtered_data.pivot_table(
 					index=['week_month'],
 					values=['slrn', 'ac_no'], 
-					aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total', 
+					aggfunc={"slrn": "nunique", "ac_no": "nunique"}, 
+					margins=False, 
+					margins_name='Total', 
 					fill_value=0
-				)
+				).reset_index()  
+
 				weekly_perf = weekly_perf.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
-			
-				# Calculate the unique counts for Approved and Rejected
-				weekly_perf['Approved'] = approved_df.groupby('week_month')['ac_no'].nunique()
-				weekly_perf['Rejected'] = rejected_df.groupby('week_month')['ac_no'].nunique()
+								
+				weekly_perf['week_month'] = weekly_perf['week_month'].astype(str)
 
-				# Fill NaN values with 0
-				weekly_perf = weekly_perf.fillna(0)
-				weekly_perf = weekly_perf.rename_axis(index={'week_month': 'Week Month'})
+				# Extract the week and month numbers
+				weekly_perf['week_number'] = weekly_perf['week_month'].str.extract(r'(\d+)').astype(int)
+				weekly_perf['month'] = weekly_perf['week_month'].str.extract(r'(\w+)$')
 
-				# Display the pivot table
-				st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Weekly Breakdown (Filtered)</div>", unsafe_allow_html=True)
-				st.dataframe(
-					weekly_perf,
-					height = 700,  
-					use_container_width=st.session_state.use_filtered_container_width
-				)
+				# Define a dictionary to map month names to their numerical values
+				month_to_num = {
+					'January': 1, 
+					'February': 2, 
+					'March': 3, 
+					'April': 4, 
+					'May': 5, 
+					'June': 6,
+					'July': 7, 
+					'August': 8, 
+					'September': 9, 
+					'October': 10, 
+					'November': 11, 
+					'December': 12
+				}
+
+				# Map month names to numerical values
+				weekly_perf['month_number'] = weekly_perf['month'].map(month_to_num)
+
+				# Create a composite sort key based on month and week numbers
+				weekly_perf['sort_key'] = weekly_perf['month_number'] * 100 + weekly_perf['week_number']
+
+				# Sort the DataFrame based on the sort key
+				weekly_perf = weekly_perf.sort_values('sort_key')
+
+				# Drop the auxiliary columns used for sorting
+				weekly_perf = weekly_perf.drop(['week_number', 'month', 'month_number', 'sort_key'], axis=1)
+
+				return weekly_perf
+						
+			weekly_perf = calculate_weekly_performance(df_selection)
+
+			# Merge with approved_df and rejected_df on 'week_month' column
+			weekly_perf = weekly_perf.merge(
+				approved_df.groupby('week_month')['ac_no'].nunique().reset_index(), on='week_month', 
+				how='left', 
+				suffixes=('', '_approved')
+			)
+			weekly_perf = weekly_perf.merge(
+				rejected_df.groupby('week_month')['ac_no'].nunique().reset_index(), on='week_month', 
+				how='left', 
+				suffixes=('', '_rejected')
+			)
+
+			# Rename the columns
+			weekly_perf = weekly_perf.rename(columns={'ac_no': 'Approved', 'ac_no_rejected': 'Rejected'})
+
+			# Fill NaN values with 0
+			weekly_perf = weekly_perf.fillna(0)
+
+			# Set 'week_month' as index
+			weekly_perf.set_index('week_month', inplace=True)
+			weekly_perf = weekly_perf.rename_axis(index={'week_month': 'Week Month'})
+
+			# Display the DataFrame
+			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Weekly Breakdown (Filtered)</div>", unsafe_allow_html=True)
+			st.dataframe(
+				weekly_perf,
+				height=700,
+				use_container_width=st.session_state.use_filtered_container_width
+			)
 		
 		st.markdown("""---""") 
 
