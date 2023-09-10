@@ -67,7 +67,7 @@ def display_kpi_metrics(df, df_selection):
 		col5.metric(label="Total Assets Approved", value=f"{total_assets_approved:,}")
 		col6.metric(label="Total Assets Rejected", value=f"{total_assets_rejected:,}")
 		col2.metric(label="Total Customers Approved", value=f"{total_customers_approved:,}")
-		col3.metric(label="Total Customers Rejecetd", value=f"{total_customers_rejected:,}")
+		col3.metric(label="Total Customers Rejected", value=f"{total_customers_rejected:,}")
 
 		col4.metric(label="Assets Reviewed Today", value=assets_reviewed_today, delta=assets_reviewed_yesterday, help="Assets reviewed today versus yesterday")
 		col1.metric(label="Customers Reviewed Today", value=customers_reviewed_today, delta=customers_reviewed_yesterday, help="Customers reviewed today versus yesterday")
@@ -109,7 +109,7 @@ def display_kpi_metrics(df, df_selection):
 			)
 
 			# Display the pivot table
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Building-Customer Breakdown By Validator (Overall)</div>", unsafe_allow_html=True)
+			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Breakdown By Validator (Overall)</div>", unsafe_allow_html=True)
 			# AgGrid(source_pivot, use_container_width=st.session_state.use_main_container_width)
 			st.dataframe(
 				source_pivot, 
@@ -172,7 +172,7 @@ def display_kpi_metrics(df, df_selection):
 			)
 
 			# Display the results in a Streamlit table
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Weekly Building-Customer Stats by Validator (Current Month)</div>", unsafe_allow_html=True)
+			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Weekly Customer-Building Stats by Validator (Current Month)</div>", unsafe_allow_html=True)
 			st.dataframe(
 				weekly_results, 
 				height = 700,
@@ -213,12 +213,11 @@ def display_kpi_metrics(df, df_selection):
 		st.checkbox("Use container width", value=True, key="use_filtered_container_width")
 		c1, c2 = st.columns((4,6))
 		with c1:
-			# Filter the DataFrame for Approved and Rejected rows
 			approved_df = df_selection[df_selection['approval_status'] == 'Approved']
 			rejected_df = df_selection[df_selection['approval_status'] == 'Rejected']
 
 			if df_selection is None:
-				st.markdown("#### Figures by Field Enumerator (No data available)")
+				st.markdown("#### (No data available)")
 			else:
 				filtered_source_pivot = df_selection.pivot_table(index="validated_by", values=['slrn', 'ac_no'], aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total', fill_value=0)
 				filtered_source_pivot = filtered_source_pivot.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
@@ -232,7 +231,7 @@ def display_kpi_metrics(df, df_selection):
 				filtered_source_pivot = filtered_source_pivot.rename_axis(index={'validated_by': 'Validator'})
 
 				# Display the pivot table
-				st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Building-Customer Breakdown By Validator (Filtered)</div>", unsafe_allow_html=True)
+				st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Breakdown By Validator (Filtered)</div>", unsafe_allow_html=True)
 				st.dataframe(
 					filtered_source_pivot,
 					height = 700,  
@@ -241,6 +240,38 @@ def display_kpi_metrics(df, df_selection):
 
 
 		with c2:
+			if df_selection is None:
+				st.markdown("#### (No data available)")
+			else:
+				weekly_perf = df_selection.pivot_table(
+					index=['week_month'],
+					values=['slrn', 'ac_no'], 
+					aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total', 
+					fill_value=0
+				)
+				weekly_perf = weekly_perf.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
+			
+				# Calculate the unique counts for Approved and Rejected
+				weekly_perf['Approved'] = approved_df.groupby('week_month')['ac_no'].nunique()
+				weekly_perf['Rejected'] = rejected_df.groupby('week_month')['ac_no'].nunique()
+
+				# Fill NaN values with 0
+				weekly_perf = weekly_perf.fillna(0)
+				weekly_perf = weekly_perf.rename_axis(index={'week_month': 'Week Month'})
+
+				# Display the pivot table
+				st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Weekly Breakdown (Filtered)</div>", unsafe_allow_html=True)
+				st.dataframe(
+					weekly_perf,
+					height = 700,  
+					use_container_width=st.session_state.use_filtered_container_width
+				)
+		
+		st.markdown("""---""") 
+
+		if 'key' not in st.session_state:
+			st.session_state['use_filtered_wkly_container_width'] = True
+		with st.container():
 			def calculate_week_month_metric(df, period):
 				# Filter the DataFrame for the current and previous months
 				filtered_df = df[
@@ -281,7 +312,6 @@ def display_kpi_metrics(df, df_selection):
 				return pivot
 			
 			current_month = datetime.datetime.now().month
-			previous_month = (datetime.datetime.now().month - 2) % 12 + 1  # Adjust for January
 			weekly_results = calculate_week_month_metric(df, current_month)
 
 			gb = GridOptionsBuilder()
@@ -294,13 +324,14 @@ def display_kpi_metrics(df, df_selection):
 			)
 
 			# Display the results in a Streamlit table
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Weekly Building-Customer Stats by Validator (Current Month)</div>", unsafe_allow_html=True)
+			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Weekly Customer-Building Stats by Validator (Current Month)</div>", unsafe_allow_html=True)
 			st.dataframe(
 				weekly_results, 
 				height = 700,
-				use_container_width=st.session_state.use_main_container_width
+				use_container_width=st.session_state.use_filtered_wkly_container_width
 			)
 
+	st.markdown("""---""")  
 	
 	# Styling the KPI cards
 	if selected == 'AEDC':
