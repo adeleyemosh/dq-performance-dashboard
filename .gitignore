@@ -30,10 +30,8 @@ dq.py
 dq_analysis.ipynb
 
 __pycache__
-.pyc
 data.xlsx
 data - Copy.xlsx
 aedc_logo.png
 app.py
-__pycache__
-.pyc
+*.pyc
