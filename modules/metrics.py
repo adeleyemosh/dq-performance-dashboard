@@ -73,9 +73,7 @@ def display_kpi_metrics(df, df_selection):
 			col4, col5, col6 = st.columns(3)
 			col4.metric(label="Overall Assets Reviewed", value=f"{overall_assets_reviewed:,}")
 			col5.metric(label="Total Assets Approved", value=f"{total_assets_approved:,}")
-			col6.metric(label="Total Assets Rejected", value=f"{total_assets_rejected:,}")
-
-			
+			col6.metric(label="Total Assets Rejected", value=f"{total_assets_rejected:,}")	
 
 		with ct2:
 			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Today Metrics</div>", unsafe_allow_html=True)
@@ -92,8 +90,6 @@ def display_kpi_metrics(df, df_selection):
 			col6.metric(label="Assets Rejected Today", value=assets_rejected_today, delta=assets_rejected_yesterday, help="Assets rejected today versus yesterday")
 
 			
-
-
 		st.markdown("""---""")  
 
 		st.checkbox("Use container width", value=True, key="use_main_container_width")
