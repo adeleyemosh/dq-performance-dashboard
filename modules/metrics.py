@@ -18,6 +18,8 @@ def display_kpi_metrics(df, df_selection):
 	total_assets_rejected = int(df[df["approval_status"] == "Rejected"]["slrn"].nunique())
 	total_customers_approved = int(df[df["approval_status"] == "Approved"]["ac_no"].nunique())
 	total_customers_rejected = int(df[df["approval_status"] == "Rejected"]["ac_no"].nunique())
+	fail_rate_overall = total_customers_rejected / overall_customers_reviewed
+	formatted_fail_rate_overall = "{:.2%}".format(fail_rate_overall)
 	
 	filtered_overall_assets_reviewed = int(df_selection["slrn"].nunique())
 	filtered_overall_customers_reviewed = int(df_selection["ac_no"].nunique())
@@ -25,6 +27,8 @@ def display_kpi_metrics(df, df_selection):
 	filtered_total_assets_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["slrn"].nunique())
 	filtered_total_customers_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["ac_no"].nunique())
 	filtered_total_customers_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["ac_no"].nunique())
+	fail_rate_filtered = filtered_total_customers_rejected / filtered_overall_customers_reviewed
+	formatted_fail_rate_filtered = "{:.2%}".format(fail_rate_filtered)
 
 	# today = datetime.date.today().strftime('%Y-%m-%d')
 	today = datetime.date.today()
@@ -36,6 +40,8 @@ def display_kpi_metrics(df, df_selection):
 	assets_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["slrn"].nunique())
 	customers_approved_today = int(today_data[today_data["approval_status"] == "Approved"]["ac_no"].nunique())
 	customers_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["ac_no"].nunique())
+	fail_rate_today = customers_rejected_today / customers_reviewed_today
+	formatted_fail_rate_today = "{:.2%}".format(fail_rate_today)
 
 	yesterday = today - datetime.timedelta(days=1)
 	formatted_yesterday = yesterday.strftime('%Y-%m-%d')
@@ -46,6 +52,8 @@ def display_kpi_metrics(df, df_selection):
 	assets_rejected_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Rejected"]["slrn"].nunique())
 	customers_approved_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Approved"]["ac_no"].nunique())
 	customers_rejected_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Rejected"]["ac_no"].nunique())
+	fail_rate_yesterday = customers_rejected_yesterday / customers_reviewed_yesterday
+	formatted_fail_rate_yesterday = "{:.2%}".format(fail_rate_yesterday)
 
 	
 	st.markdown("<div style='text-align:center; font-size:30px; font-weight:bold;'>Metrics</div>", unsafe_allow_html=True)
@@ -75,6 +83,9 @@ def display_kpi_metrics(df, df_selection):
 			col5.metric(label="Total Assets Approved", value=f"{total_assets_approved:,}")
 			col6.metric(label="Total Assets Rejected", value=f"{total_assets_rejected:,}")	
 
+			col7, col8, col9 = st.columns(3)
+			col7.metric(label="Overall Fail Rate", value=f"{formatted_fail_rate_overall}")
+
 		with ct2:
 			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Today Metrics</div>", unsafe_allow_html=True)
 			
@@ -88,6 +99,9 @@ def display_kpi_metrics(df, df_selection):
 			col4.metric(label="Assets Reviewed Today", value=assets_reviewed_today, delta=assets_reviewed_yesterday, help="Assets reviewed today versus yesterday")
 			col5.metric(label="Assets Approved Today", value=assets_approved_today, delta=assets_approved_yesterday, help="Assets approved today versus yesterday")
 			col6.metric(label="Assets Rejected Today", value=assets_rejected_today, delta=assets_rejected_yesterday, help="Assets rejected today versus yesterday")
+
+			col7, col8, col9 = st.columns(3)
+			col7.metric(label="Fail Rate Today", value=formatted_fail_rate_today, delta=formatted_fail_rate_yesterday, help="Fail Rate today versus yesterday")
 
 			
 		st.markdown("""---""")  
