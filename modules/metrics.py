@@ -20,6 +20,32 @@ def calculate_daily_rate(dataframe):
 
 	return daily_rate
 
+import streamlit as st
+
+def display_metrics_today(
+    customers_reviewed_today, customers_reviewed_yesterday,
+    customers_approved_today, customers_approved_yesterday,
+    customers_rejected_today, customers_rejected_yesterday,
+    assets_reviewed_today, assets_reviewed_yesterday,
+    assets_approved_today, assets_approved_yesterday,
+    assets_rejected_today, assets_rejected_yesterday,
+    formatted_fail_rate_today, formatted_fail_rate_yesterday
+):
+    st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Today Metrics</div>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric(label="Customers Reviewed", value=customers_reviewed_today, delta=customers_reviewed_yesterday, help="Customers reviewed today versus yesterday")
+    col2.metric(label="Customers Approved", value=customers_approved_today, delta=customers_approved_yesterday, help="Customers approved today versus yesterday")
+    col3.metric(label="Customers Rejected", value=customers_rejected_today, delta=customers_rejected_yesterday, help="Customers rejected today versus yesterday")
+
+    col4, col5, col6 = st.columns(3)
+    col4.metric(label="Assets Reviewed", value=assets_reviewed_today, delta=assets_reviewed_yesterday, help="Assets reviewed today versus yesterday")
+    col5.metric(label="Assets Approved", value=assets_approved_today, delta=assets_approved_yesterday, help="Assets approved today versus yesterday")
+    col6.metric(label="Assets Rejected", value=assets_rejected_today, delta=assets_rejected_yesterday, help="Assets rejected today versus yesterday")
+
+    col7, col8, col9 = st.columns(3)
+    col7.metric(label="Fail Rate", value=formatted_fail_rate_today, delta=formatted_fail_rate_yesterday, help="Fail Rate today versus yesterday")
+
 
 def display_kpi_metrics(df, df_selection):
 	# ---- TOP KPI's ----
@@ -42,6 +68,8 @@ def display_kpi_metrics(df, df_selection):
 	filtered_total_customers_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["ac_no"].nunique())
 	fail_rate_filtered = filtered_total_customers_rejected / filtered_overall_customers_reviewed
 	formatted_fail_rate_filtered = "{:.2%}".format(fail_rate_filtered)
+	daily_rate_filtered = calculate_daily_rate(df_selection)
+	formatted_daily_rate_filtered = "{:.2f}".format(daily_rate_filtered)
 
 	# today = datetime.date.today().strftime('%Y-%m-%d')
 	today = datetime.date.today()
@@ -97,23 +125,18 @@ def display_kpi_metrics(df, df_selection):
 
 			col7, col8, col9 = st.columns(3)
 			col7.metric(label="Overall Fail Rate", value=f"{formatted_fail_rate_overall}")
-			col8.metric(label="Overall Daily Rate", value=f"{formatted_daily_rate_overall}")
+			col8.metric(label="Daily Rate", value=f"{formatted_daily_rate_overall}")
 
 		with ct2:
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Today Metrics</div>", unsafe_allow_html=True)
-			
-			col1, col2, col3 = st.columns(3)
-			col1.metric(label="Customers Reviewed Today", value=customers_reviewed_today, delta=customers_reviewed_yesterday, help="Customers reviewed today versus yesterday")
-			col2.metric(label="Customers Approved Today", value=customers_approved_today, delta=customers_approved_yesterday, help="Customers approved today versus yesterday")
-			col3.metric(label="Customers Rejected Today", value=customers_rejected_today, delta=customers_rejected_yesterday, help="Customers rejected today versus yesterday")
-
-			col4, col5, col6 = st.columns(3)
-			col4.metric(label="Assets Reviewed Today", value=assets_reviewed_today, delta=assets_reviewed_yesterday, help="Assets reviewed today versus yesterday")
-			col5.metric(label="Assets Approved Today", value=assets_approved_today, delta=assets_approved_yesterday, help="Assets approved today versus yesterday")
-			col6.metric(label="Assets Rejected Today", value=assets_rejected_today, delta=assets_rejected_yesterday, help="Assets rejected today versus yesterday")
-
-			col7, col8, col9 = st.columns(3)
-			col7.metric(label="Fail Rate Today", value=formatted_fail_rate_today, delta=formatted_fail_rate_yesterday, help="Fail Rate today versus yesterday")
+			display_metrics_today(
+				customers_reviewed_today, customers_reviewed_yesterday,
+				customers_approved_today, customers_approved_yesterday,
+				customers_rejected_today, customers_rejected_yesterday,
+				assets_reviewed_today, assets_reviewed_yesterday,
+				assets_approved_today, assets_approved_yesterday,
+				assets_rejected_today, assets_rejected_yesterday,
+				formatted_fail_rate_today, formatted_fail_rate_yesterday
+			)
 
 			
 		st.markdown("""---""")  
@@ -246,24 +269,20 @@ def display_kpi_metrics(df, df_selection):
 			col6.metric(label="Total Assets Rejected", value=f"{filtered_total_assets_rejected:,}")
 
 			col7, col8, col9 = st.columns(3)
-			col7.metric(label="Overall Fail Rate", value=f"{formatted_fail_rate_filtered}")
+			col7.metric(label="Fail Rate", value=f"{formatted_fail_rate_filtered}")
+			col8.metric(label="Daily Rate", value=f"{formatted_daily_rate_filtered}")
 			
 
 		with ct2:
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Today Metrics</div>", unsafe_allow_html=True)
-			
-			col1, col2, col3 = st.columns(3)
-			col1.metric(label="Customers Reviewed Today", value=customers_reviewed_today, delta=customers_reviewed_yesterday, help="Customers reviewed today versus yesterday")
-			col2.metric(label="Customers Approved Today", value=customers_approved_today, delta=customers_approved_yesterday, help="Customers approved today versus yesterday")
-			col3.metric(label="Customers Rejected Today", value=customers_rejected_today, delta=customers_rejected_yesterday, help="Customers rejected today versus yesterday")
-
-			col4, col5, col6 = st.columns(3)
-			col4.metric(label="Assets Reviewed Today", value=assets_reviewed_today, delta=assets_reviewed_yesterday, help="Assets reviewed today versus yesterday")			
-			col5.metric(label="Assets Approved Today", value=assets_approved_today, delta=assets_approved_yesterday, help="Assets approved today versus yesterday")
-			col6.metric(label="Assets Rejected Today", value=assets_rejected_today, delta=assets_rejected_yesterday, help="Assets rejected today versus yesterday")
-
-			col7, col8, col9 = st.columns(3)
-			col7.metric(label="Fail Rate Today", value=formatted_fail_rate_today, delta=formatted_fail_rate_yesterday, help="Fail Rate today versus yesterday")
+			display_metrics_today(
+				customers_reviewed_today, customers_reviewed_yesterday,
+				customers_approved_today, customers_approved_yesterday,
+				customers_rejected_today, customers_rejected_yesterday,
+				assets_reviewed_today, assets_reviewed_yesterday,
+				assets_approved_today, assets_approved_yesterday,
+				assets_rejected_today, assets_rejected_yesterday,
+				formatted_fail_rate_today, formatted_fail_rate_yesterday
+			)
 			
 
 		st.markdown("""---""")  
