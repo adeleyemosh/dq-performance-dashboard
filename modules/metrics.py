@@ -20,8 +20,6 @@ def calculate_daily_rate(dataframe):
 
 	return daily_rate
 
-import streamlit as st
-
 def display_metrics_today(
     customers_reviewed_today, customers_reviewed_yesterday,
     customers_approved_today, customers_approved_yesterday,
@@ -46,27 +44,48 @@ def display_metrics_today(
     col7, col8, col9 = st.columns(3)
     col7.metric(label="Fail Rate", value=formatted_fail_rate_today, delta=formatted_fail_rate_yesterday, help="Fail Rate today versus yesterday")
 
+def display_overall_metrics(
+    overall_customers_reviewed, overall_customers_approved, overall_customers_rejected, overall_assets_reviewed, 
+	overall_assets_approved, overall_assets_rejected,
+    formatted_fail_rate_overall, formatted_daily_rate_overall
+):
+    st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Overall Metrics</div>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric(label="Customers Reviewed", value=f"{overall_customers_reviewed:,}")
+    col2.metric(label="Customers Approved", value=f"{overall_customers_approved:,}")
+    col3.metric(label="Customers Rejected", value=f"{overall_customers_rejected:,}")
+
+    col4, col5, col6 = st.columns(3)
+    col4.metric(label="Assets Reviewed", value=f"{overall_assets_reviewed:,}")
+    col5.metric(label="Assets Approved", value=f"{overall_assets_approved:,}")
+    col6.metric(label="Assets Rejected", value=f"{overall_assets_rejected:,}")  
+
+    col7, col8, col9 = st.columns(3)
+    col7.metric(label="Fail Rate", value=f"{formatted_fail_rate_overall}")
+    col8.metric(label="Daily Rate", value=f"{formatted_daily_rate_overall}")
+
 
 def display_kpi_metrics(df, df_selection):
 	# ---- TOP KPI's ----
 	overall_assets_reviewed = int(df["slrn"].nunique())
 	overall_customers_reviewed = int(df["ac_no"].nunique())
-	total_assets_approved = int(df[df["approval_status"] == "Approved"]["slrn"].nunique())
-	total_assets_rejected = int(df[df["approval_status"] == "Rejected"]["slrn"].nunique())
-	total_customers_approved = int(df[df["approval_status"] == "Approved"]["ac_no"].nunique())
-	total_customers_rejected = int(df[df["approval_status"] == "Rejected"]["ac_no"].nunique())
-	fail_rate_overall = total_customers_rejected / overall_customers_reviewed
+	overall_assets_approved = int(df[df["approval_status"] == "Approved"]["slrn"].nunique())
+	overall_assets_rejected = int(df[df["approval_status"] == "Rejected"]["slrn"].nunique())
+	overall_customers_approved = int(df[df["approval_status"] == "Approved"]["ac_no"].nunique())
+	overall_customers_rejected = int(df[df["approval_status"] == "Rejected"]["ac_no"].nunique())
+	fail_rate_overall = overall_customers_rejected / overall_customers_reviewed
 	formatted_fail_rate_overall = "{:.2%}".format(fail_rate_overall)
 	daily_rate_overall = calculate_daily_rate(df)
 	formatted_daily_rate_overall = "{:.2f}".format(daily_rate_overall)
 	
 	filtered_overall_assets_reviewed = int(df_selection["slrn"].nunique())
 	filtered_overall_customers_reviewed = int(df_selection["ac_no"].nunique())
-	filtered_total_assets_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["slrn"].nunique())
-	filtered_total_assets_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["slrn"].nunique())
-	filtered_total_customers_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["ac_no"].nunique())
-	filtered_total_customers_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["ac_no"].nunique())
-	fail_rate_filtered = filtered_total_customers_rejected / filtered_overall_customers_reviewed
+	filtered_overall_assets_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["slrn"].nunique())
+	filtered_overall_assets_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["slrn"].nunique())
+	filtered_overall_customers_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["ac_no"].nunique())
+	filtered_overall_customers_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["ac_no"].nunique())
+	fail_rate_filtered = filtered_overall_customers_rejected / filtered_overall_customers_reviewed
 	formatted_fail_rate_filtered = "{:.2%}".format(fail_rate_filtered)
 	daily_rate_filtered = calculate_daily_rate(df_selection)
 	formatted_daily_rate_filtered = "{:.2f}".format(daily_rate_filtered)
@@ -111,21 +130,11 @@ def display_kpi_metrics(df, df_selection):
 		
 		ct1, ct2 = st.columns((5,5))
 		with ct1:
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Overall Metrics</div>", unsafe_allow_html=True)
-
-			col1, col2, col3 = st.columns(3)
-			col1.metric(label="Overall Customers Reviewed", value=f"{overall_customers_reviewed:,}")
-			col2.metric(label="Total Customers Approved", value=f"{total_customers_approved:,}")
-			col3.metric(label="Total Customers Rejected", value=f"{total_customers_rejected:,}")
-
-			col4, col5, col6 = st.columns(3)
-			col4.metric(label="Overall Assets Reviewed", value=f"{overall_assets_reviewed:,}")
-			col5.metric(label="Total Assets Approved", value=f"{total_assets_approved:,}")
-			col6.metric(label="Total Assets Rejected", value=f"{total_assets_rejected:,}")	
-
-			col7, col8, col9 = st.columns(3)
-			col7.metric(label="Overall Fail Rate", value=f"{formatted_fail_rate_overall}")
-			col8.metric(label="Daily Rate", value=f"{formatted_daily_rate_overall}")
+			display_overall_metrics(
+				overall_customers_reviewed, overall_customers_approved, overall_customers_rejected, overall_assets_reviewed, 
+				overall_assets_approved, overall_assets_rejected,
+				formatted_fail_rate_overall, formatted_daily_rate_overall
+			)
 
 		with ct2:
 			display_metrics_today(
@@ -256,23 +265,12 @@ def display_kpi_metrics(df, df_selection):
 		
 		ct1, ct2 = st.columns((5,5))
 		with ct1:
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Overall Metrics</div>", unsafe_allow_html=True)
-
-			col1, col2, col3 = st.columns(3)
-			col1.metric(label="Overall Customers Reviewed", value=f"{filtered_overall_customers_reviewed:,}")
-			col2.metric(label="Total Customers Approved", value=f"{filtered_total_customers_approved:,}")
-			col3.metric(label="Total Customers Rejecetd", value=f"{filtered_total_customers_rejected:,}")
-
-			col4, col5, col6 = st.columns(3)
-			col4.metric(label="Overall Assets Reviewed", value=f"{filtered_overall_assets_reviewed:,}")
-			col5.metric(label="Total Assets Approved", value=f"{filtered_total_assets_approved:,}")
-			col6.metric(label="Total Assets Rejected", value=f"{filtered_total_assets_rejected:,}")
-
-			col7, col8, col9 = st.columns(3)
-			col7.metric(label="Fail Rate", value=f"{formatted_fail_rate_filtered}")
-			col8.metric(label="Daily Rate", value=f"{formatted_daily_rate_filtered}")
+			display_overall_metrics(
+				filtered_overall_customers_reviewed, filtered_overall_customers_approved, filtered_overall_customers_rejected, filtered_overall_assets_reviewed, 
+				filtered_overall_assets_approved, filtered_overall_assets_rejected,
+				formatted_fail_rate_filtered, formatted_daily_rate_filtered
+			)
 			
-
 		with ct2:
 			display_metrics_today(
 				customers_reviewed_today, customers_reviewed_yesterday,
