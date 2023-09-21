@@ -99,18 +99,6 @@ def filter_data(df):
         default=df["customer_status"].unique(),
     )
         
-    region = st.sidebar.multiselect(
-    	"Select Region:",
-    	options=df["region"].unique(),
-    	default=df["region"].unique()
-    )
-
-    # district = st.sidebar.multiselect(
-    # 	"Select District:",
-    # 	options=df["district"].unique(),
-    # 	default=df["district"].unique()
-    # )
-
     st.sidebar.markdown('''
     ---
     Made with ❤️ by [Beacon Power Services](https://beaconpowerservices.com/).
