@@ -71,47 +71,47 @@ date_range_end_str = date_range_end.strftime('%Y-%m-%d')
 #----------------- GENERAL FUNCTIONS --------------------#
 #--------------------------------------------------------#
 def filter_data(df):
-	st.sidebar.header("Please Filter Here:")
-	date_range_start_str = date_range_start.strftime('%Y-%m-%d')
-	date_range_end_str = date_range_end.strftime('%Y-%m-%d')
+    st.sidebar.header("Please Filter Here:")
+    date_range_start_str = date_range_start.strftime('%Y-%m-%d')
+    date_range_end_str = date_range_end.strftime('%Y-%m-%d')
 
-	month = st.sidebar.multiselect(
-		"Select Month:",
-		options=df["month"].unique(),
-		default=df["month"].unique()
-	)
+    month = st.sidebar.multiselect(
+        "Select Month:",
+        options=df["month"].unique(),
+        default=df["month"].unique()
+    )
 
-	year = st.sidebar.multiselect(
-		"Select Year:",
-		options=df["year"].unique(),
-		default=df["year"].unique()
-	)
+    year = st.sidebar.multiselect(
+        "Select Year:",
+        options=df["year"].unique(),
+        default=df["year"].unique()
+    )
 
-	validated_by = st.sidebar.multiselect(
-		"Select Validator:",
-		options=df["validated_by"].unique(),
-		default=df["validated_by"].unique()
-	)
+    validated_by = st.sidebar.multiselect(
+        "Select Validator:",
+        options=df["validated_by"].unique(),
+        default=df["validated_by"].unique()
+    )
         
-	source_tag = st.sidebar.multiselect(
-		"Select Customer Status:",
-		options=df["customer_status"].unique(),
-		default=df["customer_status"].unique(),
-	)
+    source_tag = st.sidebar.multiselect(
+        "Select Customer Status:",
+        options=df["customer_status"].unique(),
+        default=df["customer_status"].unique(),
+    )
         
-	region = st.sidebar.multiselect(
-		"Select Region:",
-		options=df["region"].unique(),
-		default=df["region"].unique()
-	)
+    region = st.sidebar.multiselect(
+    	"Select Region:",
+    	options=df["region"].unique(),
+    	default=df["region"].unique()
+    )
 
-	district = st.sidebar.multiselect(
-		"Select District:",
-		options=df["district"].unique(),
-		default=df["district"].unique()
-	)
+    # district = st.sidebar.multiselect(
+    # 	"Select District:",
+    # 	options=df["district"].unique(),
+    # 	default=df["district"].unique()
+    # )
 
-	st.sidebar.markdown('''
-	---
-	Made with ❤️ by [Beacon Power Services](https://beaconpowerservices.com/).
-	''')
+    st.sidebar.markdown('''
+    ---
+    Made with ❤️ by [Beacon Power Services](https://beaconpowerservices.com/).
+    ''')

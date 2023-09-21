@@ -59,8 +59,8 @@ validated_by_ref = ecg_df["validated_by"]
 source_tag = ecg_df["customer_status"]
 year_ref = ecg_df['year']
 month_ref = ecg_df['month']
-region_ref = ecg_df['region']
-district_ref = ecg_df['district']
+# region_ref = ecg_df['region']
+# district_ref = ecg_df['district']
 
 
 today = datetime.datetime.now().date()
@@ -78,8 +78,8 @@ ecg_df_selection = ecg_df.query(
     "year == @year_ref & "
     "month == @month_ref & "
     "@date_range_start <= val_date <= @date_range_end & "
-    "region == @region_ref & "
-    "district == @district_ref"
+    # "region == @region_ref & "
+    # "district == @district_ref"
 )
 
 
