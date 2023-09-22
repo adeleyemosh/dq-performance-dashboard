@@ -65,6 +65,145 @@ def display_overall_metrics(
     col7.metric(label="Fail Rate", value=f"{formatted_fail_rate_overall}")
     col8.metric(label="Daily Rate", value=f"{formatted_daily_rate_overall}")
 
+def calculate_weekly_performance(filtered_data):
+	weekly_perf = filtered_data.pivot_table(
+		index=['week_month'],
+		values=['slrn', 'ac_no'], 
+		aggfunc={"slrn": "nunique", "ac_no": "nunique"}, 
+		margins=False, 
+		margins_name='Total', 
+		fill_value=0
+	).reset_index()  
+
+	weekly_perf = weekly_perf.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
+					
+	weekly_perf['week_month'] = weekly_perf['week_month'].astype(str)
+
+	# Extract the week and month numbers
+	weekly_perf['week_number'] = weekly_perf['week_month'].str.extract(r'(\d+)').astype(int)
+	weekly_perf['month'] = weekly_perf['week_month'].str.extract(r'(\w+)$')
+
+	# Define a dictionary to map month names to their numerical values
+	month_to_num = {
+		'January': 1, 
+		'February': 2, 
+		'March': 3, 
+		'April': 4, 
+		'May': 5, 
+		'June': 6,
+		'July': 7, 
+		'August': 8, 
+		'September': 9, 
+		'October': 10, 
+		'November': 11, 
+		'December': 12
+	}
+
+	# Map month names to numerical values
+	weekly_perf['month_number'] = weekly_perf['month'].map(month_to_num)
+
+	# Create a composite sort key based on month and week numbers
+	weekly_perf['sort_key'] = weekly_perf['month_number'] * 100 + weekly_perf['week_number']
+
+	# Sort the DataFrame based on the sort key
+	weekly_perf = weekly_perf.sort_values('sort_key')
+
+	# Drop the auxiliary columns used for sorting
+	weekly_perf = weekly_perf.drop(['week_number', 'month', 'month_number', 'sort_key'], axis=1)
+
+	return weekly_perf
+
+def display_weekly_performance(weekly_perf, approved_df, rejected_df, title, container_width):
+    # Merge with approved_df and rejected_df on 'week_month' column
+    weekly_perf = weekly_perf.merge(
+        approved_df.groupby('week_month')['ac_no'].nunique().reset_index(), on='week_month',
+        how='left',
+        suffixes=('', '_approved')
+    )
+    weekly_perf = weekly_perf.merge(
+        rejected_df.groupby('week_month')['ac_no'].nunique().reset_index(), on='week_month',
+        how='left',
+        suffixes=('', '_rejected')
+    )
+
+    # Rename the columns
+    weekly_perf = weekly_perf.rename(columns={'ac_no': 'Approved', 'ac_no_rejected': 'Rejected'})
+
+    # Fill NaN values with 0
+    weekly_perf = weekly_perf.fillna(0)
+
+    # Set 'week_month' as index
+    weekly_perf.set_index('week_month', inplace=True)
+    weekly_perf = weekly_perf.rename_axis(index={'week_month': 'Week Month'})
+
+    # Display the DataFrame
+    st.markdown(f"<div style='text-align:center; font-size:15px; font-weight:bold;'>{title}</div>", unsafe_allow_html=True)
+    st.dataframe(
+        weekly_perf,
+        height=700,
+        use_container_width=container_width
+    )
+
+def calculate_week_month_metric(df, period):
+	# Filter the DataFrame for the current and previous months
+	filtered_df = df[
+		(df['validated_date'].dt.month == period) 
+	]
+
+	# Calculate distinct counts for 'Approved' and 'Rejected'
+	approved_counts = filtered_df[filtered_df['approval_status'] == 'Approved'].groupby(['validated_by', 'week_month'])['ac_no'].nunique()
+	rejected_counts = filtered_df[filtered_df['approval_status'] == 'Rejected'].groupby(['validated_by', 'week_month'])['ac_no'].nunique()
+
+	# Fill missing values with 0
+	approved_counts = approved_counts.unstack().fillna(0)
+	rejected_counts = rejected_counts.unstack().fillna(0)
+
+	pivot_ac_no_slrn = filtered_df.pivot_table(
+		index='validated_by',
+		columns='week_month',
+		values=['ac_no', 'slrn'],
+		aggfunc={'ac_no': pd.Series.nunique, 'slrn': 'nunique'},
+		fill_value=0,
+		margins=True,
+		margins_name='Grand Total'
+	)
+
+	pivot_approved_rejected = pd.concat([
+		approved_counts,
+		rejected_counts
+	], keys=['Approved', 'Rejected'], axis=1)
+
+	# Combine the two pivot tables
+	pivot = pd.concat([pivot_ac_no_slrn, pivot_approved_rejected], axis=1)
+
+	pivot = pivot.rename_axis(index={'week_month': 'Week - Month', 'validated_by': 'Validator'})
+	pivot = pivot.rename(columns={'ac_no': 'Customers', 'slrn': 'Buildings'})
+
+	pivot.columns.names = [None] * len(pivot.columns.names)
+
+	return pivot
+
+def display_weekly_results(df, container_width):
+    current_month = datetime.datetime.now().month
+    previous_month = (datetime.datetime.now().month - 2) % 12 + 1  # Adjust for January
+    weekly_results = calculate_week_month_metric(df, current_month)
+
+    gb = GridOptionsBuilder()
+
+    gb.configure_column(
+        field="validated_by",
+        header_name="Validated By",
+        width=100,
+        pivot=True,
+    )
+
+    # Display the results in a Streamlit table
+    st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Weekly Customer-Building Stats by Validator (Current Month)</div>", unsafe_allow_html=True)
+    st.dataframe(
+        weekly_results, 
+        height=700,
+        use_container_width=container_width
+    )
 
 def display_kpi_metrics(df, df_selection):
 	# ---- TOP KPI's ----
@@ -188,72 +327,24 @@ def display_kpi_metrics(df, df_selection):
 				use_container_width=st.session_state.use_main_container_width
 			)
 
-
 		with c2:
-			def calculate_week_month_metric(df, period):
-				# Filter the DataFrame for the current and previous months
-				filtered_df = df[
-					(df['validated_date'].dt.month == period) 
-				]
-
-				# Calculate distinct counts for 'Approved' and 'Rejected'
-				approved_counts = filtered_df[filtered_df['approval_status'] == 'Approved'].groupby(['validated_by', 'week_month'])['ac_no'].nunique()
-				rejected_counts = filtered_df[filtered_df['approval_status'] == 'Rejected'].groupby(['validated_by', 'week_month'])['ac_no'].nunique()
-
-				# Fill missing values with 0
-				approved_counts = approved_counts.unstack().fillna(0)
-				rejected_counts = rejected_counts.unstack().fillna(0)
-
-				pivot_ac_no_slrn = filtered_df.pivot_table(
-					index='validated_by',
-					columns='week_month',
-					values=['ac_no', 'slrn'],
-					aggfunc={'ac_no': pd.Series.nunique, 'slrn': 'nunique'},
-					fill_value=0,
-					margins=True,
-					margins_name='Grand Total'
-				)
-
-				pivot_approved_rejected = pd.concat([
-					approved_counts,
-					rejected_counts
-				], keys=['Approved', 'Rejected'], axis=1)
-
-				# Combine the two pivot tables
-				pivot = pd.concat([pivot_ac_no_slrn, pivot_approved_rejected], axis=1)
-
-				pivot = pivot.rename_axis(index={'week_month': 'Week - Month', 'validated_by': 'Validator'})
-				pivot = pivot.rename(columns={'ac_no': 'Customers', 'slrn': 'Buildings'})
-
-				pivot.columns.names = [None] * len(pivot.columns.names)
-
-				return pivot
-			
-			current_month = datetime.datetime.now().month
-			previous_month = (datetime.datetime.now().month - 2) % 12 + 1  # Adjust for January
-			weekly_results = calculate_week_month_metric(df, current_month)
-
-			gb = GridOptionsBuilder()
-
-			gb.configure_column(
-				field="validated_by",
-				header_name="Validated By",
-				width=100,
-				pivot=True,
+			weekly_perf = calculate_weekly_performance(df) 
+			title = "Customer-Building Weekly Breakdown"
+			container_width = st.session_state.use_main_container_width 
+			display_weekly_performance(
+				weekly_perf, 
+				approved_df, 
+				rejected_df,
+				title,
+				container_width
 			)
+		
+		st.markdown("""---""") 
 
-			# Display the results in a Streamlit table
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Weekly Customer-Building Stats by Validator (Current Month)</div>", unsafe_allow_html=True)
-			st.dataframe(
-				weekly_results, 
-				height = 700,
-				use_container_width=st.session_state.use_main_container_width
-			)
-			# AgGrid(
-			# 	weekly_results, 
-			# 	allow_unsafe_jscode = True,
-			# 	use_container_width=st.session_state.use_main_container_width
-			# )
+		if 'key' not in st.session_state:
+			st.session_state['use_filtered_wkly_container_width'] = True
+		with st.container():
+			display_weekly_results(df, container_width)
 
 	#--------------------------------------------------------#
 	#----------------------- FILTERED -----------------------#
@@ -288,8 +379,8 @@ def display_kpi_metrics(df, df_selection):
 		st.checkbox("Use container width", value=True, key="use_filtered_container_width")
 		c1, c2 = st.columns((4,6))
 		with c1:
-			approved_df = df_selection[df_selection['approval_status'] == 'Approved']
-			rejected_df = df_selection[df_selection['approval_status'] == 'Rejected']
+			approved_df_selection = df_selection[df_selection['approval_status'] == 'Approved']
+			rejected_df_selection = df_selection[df_selection['approval_status'] == 'Rejected']
 
 			if df_selection is None:
 				st.markdown("#### (No data available)")
@@ -298,8 +389,8 @@ def display_kpi_metrics(df, df_selection):
 				filtered_source_pivot = filtered_source_pivot.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
 
 				# Calculate the unique counts for Approved and Rejected
-				filtered_source_pivot['Approved'] = approved_df.groupby('validated_by')['ac_no'].nunique()
-				filtered_source_pivot['Rejected'] = rejected_df.groupby('validated_by')['ac_no'].nunique()
+				filtered_source_pivot['Approved'] = approved_df_selection.groupby('validated_by')['ac_no'].nunique()
+				filtered_source_pivot['Rejected'] = rejected_df_selection.groupby('validated_by')['ac_no'].nunique()
 
 				# Fill NaN values with 0
 				filtered_source_pivot = filtered_source_pivot.fillna(0)
@@ -312,88 +403,17 @@ def display_kpi_metrics(df, df_selection):
 					height = 700,  
 					use_container_width=st.session_state.use_filtered_container_width
 				)
-
 		
-		
-		with c2: 
-			def calculate_weekly_performance(filtered_data):
-				weekly_perf = filtered_data.pivot_table(
-					index=['week_month'],
-					values=['slrn', 'ac_no'], 
-					aggfunc={"slrn": "nunique", "ac_no": "nunique"}, 
-					margins=False, 
-					margins_name='Total', 
-					fill_value=0
-				).reset_index()  
-
-				weekly_perf = weekly_perf.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
-								
-				weekly_perf['week_month'] = weekly_perf['week_month'].astype(str)
-
-				# Extract the week and month numbers
-				weekly_perf['week_number'] = weekly_perf['week_month'].str.extract(r'(\d+)').astype(int)
-				weekly_perf['month'] = weekly_perf['week_month'].str.extract(r'(\w+)$')
-
-				# Define a dictionary to map month names to their numerical values
-				month_to_num = {
-					'January': 1, 
-					'February': 2, 
-					'March': 3, 
-					'April': 4, 
-					'May': 5, 
-					'June': 6,
-					'July': 7, 
-					'August': 8, 
-					'September': 9, 
-					'October': 10, 
-					'November': 11, 
-					'December': 12
-				}
-
-				# Map month names to numerical values
-				weekly_perf['month_number'] = weekly_perf['month'].map(month_to_num)
-
-				# Create a composite sort key based on month and week numbers
-				weekly_perf['sort_key'] = weekly_perf['month_number'] * 100 + weekly_perf['week_number']
-
-				# Sort the DataFrame based on the sort key
-				weekly_perf = weekly_perf.sort_values('sort_key')
-
-				# Drop the auxiliary columns used for sorting
-				weekly_perf = weekly_perf.drop(['week_number', 'month', 'month_number', 'sort_key'], axis=1)
-
-				return weekly_perf
-						
-			weekly_perf = calculate_weekly_performance(df_selection)
-
-			# Merge with approved_df and rejected_df on 'week_month' column
-			weekly_perf = weekly_perf.merge(
-				approved_df.groupby('week_month')['ac_no'].nunique().reset_index(), on='week_month', 
-				how='left', 
-				suffixes=('', '_approved')
-			)
-			weekly_perf = weekly_perf.merge(
-				rejected_df.groupby('week_month')['ac_no'].nunique().reset_index(), on='week_month', 
-				how='left', 
-				suffixes=('', '_rejected')
-			)
-
-			# Rename the columns
-			weekly_perf = weekly_perf.rename(columns={'ac_no': 'Approved', 'ac_no_rejected': 'Rejected'})
-
-			# Fill NaN values with 0
-			weekly_perf = weekly_perf.fillna(0)
-
-			# Set 'week_month' as index
-			weekly_perf.set_index('week_month', inplace=True)
-			weekly_perf = weekly_perf.rename_axis(index={'week_month': 'Week Month'})
-
-			# Display the DataFrame
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Weekly Breakdown (Filtered)</div>", unsafe_allow_html=True)
-			st.dataframe(
-				weekly_perf,
-				height=700,
-				use_container_width=st.session_state.use_filtered_container_width
+		with c2:
+			weekly_perf = calculate_weekly_performance(df_selection) 
+			title = "Customer-Building Weekly Breakdown (Filtered)"
+			container_width = st.session_state.use_filtered_container_width 
+			display_weekly_performance(
+				weekly_perf, 
+				approved_df_selection, 
+				rejected_df_selection,
+				title,
+				container_width
 			)
 		
 		st.markdown("""---""") 
@@ -401,64 +421,7 @@ def display_kpi_metrics(df, df_selection):
 		if 'key' not in st.session_state:
 			st.session_state['use_filtered_wkly_container_width'] = True
 		with st.container():
-			def calculate_week_month_metric(df, period):
-				# Filter the DataFrame for the current and previous months
-				filtered_df = df[
-					(df['validated_date'].dt.month == period) 
-				]
-
-				# Calculate distinct counts for 'Approved' and 'Rejected'
-				approved_counts = filtered_df[filtered_df['approval_status'] == 'Approved'].groupby(['validated_by', 'week_month'])['ac_no'].nunique()
-				rejected_counts = filtered_df[filtered_df['approval_status'] == 'Rejected'].groupby(['validated_by', 'week_month'])['ac_no'].nunique()
-
-				# Fill missing values with 0
-				approved_counts = approved_counts.unstack().fillna(0)
-				rejected_counts = rejected_counts.unstack().fillna(0)
-
-				pivot_ac_no_slrn = filtered_df.pivot_table(
-					index='validated_by',
-					columns='week_month',
-					values=['ac_no', 'slrn'],
-					aggfunc={'ac_no': pd.Series.nunique, 'slrn': 'nunique'},
-					fill_value=0,
-					margins=True,
-					margins_name='Grand Total'
-				)
-
-				pivot_approved_rejected = pd.concat([
-					approved_counts,
-					rejected_counts
-				], keys=['Approved', 'Rejected'], axis=1)
-
-				# Combine the two pivot tables
-				pivot = pd.concat([pivot_ac_no_slrn, pivot_approved_rejected], axis=1)
-
-				pivot = pivot.rename_axis(index={'week_month': 'Week - Month', 'validated_by': 'Validator'})
-				pivot = pivot.rename(columns={'ac_no': 'Customers', 'slrn': 'Buildings'})
-
-				pivot.columns.names = [None] * len(pivot.columns.names)
-
-				return pivot
-			
-			current_month = datetime.datetime.now().month
-			weekly_results = calculate_week_month_metric(df, current_month)
-
-			gb = GridOptionsBuilder()
-
-			gb.configure_column(
-				field="validated_by",
-				header_name="Validated By",
-				width=100,
-				pivot=True,
-			)
-
-			# Display the results in a Streamlit table
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Weekly Customer-Building Stats by Validator (Current Month)</div>", unsafe_allow_html=True)
-			st.dataframe(
-				weekly_results, 
-				height = 700,
-				use_container_width=st.session_state.use_filtered_wkly_container_width
-			)
+			display_weekly_results(df, container_width)
 
 	st.markdown("""---""")  
 	
