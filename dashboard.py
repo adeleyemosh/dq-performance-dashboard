@@ -77,7 +77,7 @@ ecg_df_selection = ecg_df.query(
     "customer_status == @source_tag &"
     "year == @year_ref & "
     "month == @month_ref & "
-    "@date_range_start <= val_date <= @date_range_end & "
+    "@date_range_start <= val_date <= @date_range_end "
     # "region == @region_ref & "
     # "district == @district_ref"
 )
