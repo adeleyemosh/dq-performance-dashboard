@@ -1,5 +1,4 @@
 import streamlit as st
-import datetime
 from streamlit_option_menu import option_menu
 
 #--------------------------------------------------------#
@@ -53,53 +52,3 @@ def streamlit_menu(design=1):
             },
         )
         return selected
-
-
-today = datetime.datetime.now().date()
-default_start = datetime.datetime(today.year, today.month, 1).date()
-
-global date_range_start
-date_range_start = st.sidebar.date_input("Select a start date", key='date_range_start', value=default_start)
-
-global date_range_end
-date_range_end = st.sidebar.date_input("Select a end date", key='date_range_end', value=today)
-
-date_range_start_str = date_range_start.strftime('%Y-%m-%d')
-date_range_end_str = date_range_end.strftime('%Y-%m-%d')
-
-#--------------------------------------------------------#
-#----------------- GENERAL FUNCTIONS --------------------#
-#--------------------------------------------------------#
-def filter_data(df):
-    st.sidebar.header("Please Filter Here:")
-    date_range_start_str = date_range_start.strftime('%Y-%m-%d')
-    date_range_end_str = date_range_end.strftime('%Y-%m-%d')
-
-    month = st.sidebar.multiselect(
-        "Select Month:",
-        options=df["month"].unique(),
-        default=df["month"].unique()
-    )
-
-    year = st.sidebar.multiselect(
-        "Select Year:",
-        options=df["year"].unique(),
-        default=df["year"].unique()
-    )
-
-    validated_by = st.sidebar.multiselect(
-        "Select Validator:",
-        options=df["validated_by"].unique(),
-        default=df["validated_by"].unique()
-    )
-        
-    source_tag = st.sidebar.multiselect(
-        "Select Customer Status:",
-        options=df["customer_status"].unique(),
-        default=df["customer_status"].unique(),
-    )
-        
-    st.sidebar.markdown('''
-    ---
-    Made with ❤️ by [Beacon Power Services](https://beaconpowerservices.com/).
-    ''')

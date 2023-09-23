@@ -65,9 +65,9 @@ def display_overall_metrics(
     col7.metric(label="Fail Rate", value=f"{formatted_fail_rate_overall}")
     col8.metric(label="Daily Rate", value=f"{formatted_daily_rate_overall}")
 
-def calculate_weekly_performance(filtered_data):
+def calculate_weekly_performance(filtered_data, period):
 	weekly_perf = filtered_data.pivot_table(
-		index=['week_month'],
+		index=[period],
 		values=['slrn', 'ac_no'], 
 		aggfunc={"slrn": "nunique", "ac_no": "nunique"}, 
 		margins=False, 
@@ -77,11 +77,11 @@ def calculate_weekly_performance(filtered_data):
 
 	weekly_perf = weekly_perf.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
 					
-	weekly_perf['week_month'] = weekly_perf['week_month'].astype(str)
+	weekly_perf[period] = weekly_perf[period].astype(str)
 
 	# Extract the week and month numbers
-	weekly_perf['week_number'] = weekly_perf['week_month'].str.extract(r'(\d+)').astype(int)
-	weekly_perf['month'] = weekly_perf['week_month'].str.extract(r'(\w+)$')
+	weekly_perf['week_number'] = weekly_perf[period].str.extract(r'(\d+)').astype(int)
+	weekly_perf['month'] = weekly_perf[period].str.extract(r'(\w+)$')
 
 	# Define a dictionary to map month names to their numerical values
 	month_to_num = {
@@ -113,15 +113,15 @@ def calculate_weekly_performance(filtered_data):
 
 	return weekly_perf
 
-def display_weekly_performance(weekly_perf, approved_df, rejected_df, title, container_width):
-    # Merge with approved_df and rejected_df on 'week_month' column
+def display_weekly_performance(weekly_perf, period, approved_df, rejected_df, title, container_width):
+    # Merge with approved_df and rejected_df on period column
     weekly_perf = weekly_perf.merge(
-        approved_df.groupby('week_month')['ac_no'].nunique().reset_index(), on='week_month',
+        approved_df.groupby(period)['ac_no'].nunique().reset_index(), on=period,
         how='left',
         suffixes=('', '_approved')
     )
     weekly_perf = weekly_perf.merge(
-        rejected_df.groupby('week_month')['ac_no'].nunique().reset_index(), on='week_month',
+        rejected_df.groupby(period)['ac_no'].nunique().reset_index(), on=period,
         how='left',
         suffixes=('', '_rejected')
     )
@@ -132,9 +132,9 @@ def display_weekly_performance(weekly_perf, approved_df, rejected_df, title, con
     # Fill NaN values with 0
     weekly_perf = weekly_perf.fillna(0)
 
-    # Set 'week_month' as index
-    weekly_perf.set_index('week_month', inplace=True)
-    weekly_perf = weekly_perf.rename_axis(index={'week_month': 'Week Month'})
+    # Set period as index
+    weekly_perf.set_index(period, inplace=True)
+    weekly_perf = weekly_perf.rename_axis(index={period: 'Week Month'})
 
     # Display the DataFrame
     st.markdown(f"<div style='text-align:center; font-size:15px; font-weight:bold;'>{title}</div>", unsafe_allow_html=True)
@@ -239,7 +239,9 @@ def display_kpi_metrics(df, df_selection):
 	assets_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["slrn"].nunique())
 	customers_approved_today = int(today_data[today_data["approval_status"] == "Approved"]["ac_no"].nunique())
 	customers_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["ac_no"].nunique())
-	fail_rate_today = customers_rejected_today / customers_reviewed_today
+	fail_rate_today = (
+        customers_rejected_today / customers_reviewed_today
+    ) if customers_reviewed_today != 0 else 0.0
 	formatted_fail_rate_today = "{:.2%}".format(fail_rate_today)
 
 	yesterday = today - datetime.timedelta(days=1)
@@ -328,11 +330,13 @@ def display_kpi_metrics(df, df_selection):
 			)
 
 		with c2:
-			weekly_perf = calculate_weekly_performance(df) 
+			period_main = 'week_month_year'
+			weekly_perf = calculate_weekly_performance(df, period_main) 
 			title = "Customer-Building Weekly Breakdown"
 			container_width = st.session_state.use_main_container_width 
 			display_weekly_performance(
-				weekly_perf, 
+				weekly_perf,
+				period_main, 
 				approved_df, 
 				rejected_df,
 				title,
@@ -405,11 +409,13 @@ def display_kpi_metrics(df, df_selection):
 				)
 		
 		with c2:
-			weekly_perf = calculate_weekly_performance(df_selection) 
+			period_fil = 'week_month'
+			weekly_perf = calculate_weekly_performance(df_selection, period_fil) 
 			title = "Customer-Building Weekly Breakdown (Filtered)"
 			container_width = st.session_state.use_filtered_container_width 
 			display_weekly_performance(
 				weekly_perf, 
+				period_fil,
 				approved_df_selection, 
 				rejected_df_selection,
 				title,
