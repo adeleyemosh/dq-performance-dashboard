@@ -1,15 +1,15 @@
 import streamlit as st
 import pandas as pd
 from PIL import Image
-import datetime
 
 from modules.ecg_connection import get_ecg_ex_cus_data_from_database
 from modules.ecg_connection import get_ecg_nw_cus_data_from_database
 from modules.menu import streamlit_menu
-from modules.metrics import display_kpi_metrics
+from modules.metrics import display_metrics_tabs
 from modules.header import dashboard_header
 from modules.data import show_raw_data
 from modules.filter import filter_data
+
 
 #--------------------------------------------------------#
 #-------------- PAGE CONFIGURATION SETUP ----------------#
@@ -17,7 +17,7 @@ from modules.filter import filter_data
 
 st.set_page_config(
 	page_title="DQ Performance Dashboard", 
-    page_icon="💈", 
+    page_icon="📊", 
 	layout="wide",
 	initial_sidebar_state="collapsed"
 )
@@ -74,11 +74,11 @@ def ecg():
 		image2 = Image.open("logo/ecg_logo.png"), 
 		title="ECG Dashboard"
 	)
-	display_kpi_metrics(ecg_df, ecg_df_selection)
+	display_metrics_tabs(ecg_df, ecg_df_selection)
 	show_raw_data(ecg_df_selection)
 
 	#Display Filters
-	filter_data(ecg_df)
+	# filter_data(ecg_df)
 
 
 #--------------------------------------------------------#

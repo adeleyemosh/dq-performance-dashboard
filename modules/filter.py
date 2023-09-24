@@ -12,18 +12,17 @@ def filter_data(data):
 	st.sidebar.header("Filter Data")
 
 	date_range_start = st.sidebar.date_input(
-			"Select a start date", 
-			key='date_range_start', 
-			value=default_start
-		)
+		"Select a start date:", 
+		key='date_range_start', 
+		value=default_start
+	)
 		
 	date_range_end = st.sidebar.date_input(
-		"Select a end date", 
+		"Select a end date:", 
 		key='date_range_end', 
 		value=today
 	)
 
-	# Define filter options
 	months = data["month"].unique()
 	selected_months = st.sidebar.multiselect(
 		"Select Month:", 
@@ -38,13 +37,6 @@ def filter_data(data):
 		default=years
 	)
 
-	validated_bys = data["validated_by"].unique()
-	selected_validated_bys = st.sidebar.multiselect(
-		"Select Validator:", 
-		validated_bys, 
-		default=validated_bys
-	)
-
 	source_tags = data["customer_status"].unique()
 	selected_source_tags = st.sidebar.multiselect(
 		"Select Customer Status:", 
@@ -52,9 +44,15 @@ def filter_data(data):
 		default=source_tags
 	)
 
+	validated_bys = data["validated_by"].unique()
+	selected_validated_bys = st.sidebar.multiselect(
+		"Select Validator:", 
+		validated_bys, 
+		default=validated_bys
+	)
+
 	data['val_date'] = pd.to_datetime(data['val_date']).dt.date
 
-	# Apply filters to the data
 	data_selection = data[
         (data["month"].isin(selected_months)) &
         (data["year"].isin(selected_years)) &

@@ -4,6 +4,7 @@ import datetime
 from datetime import timedelta
 from streamlit_extras.metric_cards import style_metric_cards
 from st_aggrid import AgGrid, GridOptionsBuilder
+
 from modules.menu import streamlit_menu
 
 # 1=sidebar menu, 2=horizontal menu, 3=horizontal menu w/ custom menu
@@ -205,236 +206,332 @@ def display_weekly_results(df, container_width):
         use_container_width=container_width
     )
 
-def display_kpi_metrics(df, df_selection):
-	# ---- TOP KPI's ----
-	overall_assets_reviewed = int(df["slrn"].nunique())
-	overall_customers_reviewed = int(df["ac_no"].nunique())
-	overall_assets_approved = int(df[df["approval_status"] == "Approved"]["slrn"].nunique())
-	overall_assets_rejected = int(df[df["approval_status"] == "Rejected"]["slrn"].nunique())
-	overall_customers_approved = int(df[df["approval_status"] == "Approved"]["ac_no"].nunique())
-	overall_customers_rejected = int(df[df["approval_status"] == "Rejected"]["ac_no"].nunique())
-	fail_rate_overall = overall_customers_rejected / overall_customers_reviewed
-	formatted_fail_rate_overall = "{:.2%}".format(fail_rate_overall)
-	daily_rate_overall = calculate_daily_rate(df)
-	formatted_daily_rate_overall = "{:.2f}".format(daily_rate_overall)
-	
-	filtered_overall_assets_reviewed = int(df_selection["slrn"].nunique())
-	filtered_overall_customers_reviewed = int(df_selection["ac_no"].nunique())
-	filtered_overall_assets_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["slrn"].nunique())
-	filtered_overall_assets_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["slrn"].nunique())
-	filtered_overall_customers_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["ac_no"].nunique())
-	filtered_overall_customers_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["ac_no"].nunique())
-	fail_rate_filtered = filtered_overall_customers_rejected / filtered_overall_customers_reviewed
-	formatted_fail_rate_filtered = "{:.2%}".format(fail_rate_filtered)
-	daily_rate_filtered = calculate_daily_rate(df_selection)
-	formatted_daily_rate_filtered = "{:.2f}".format(daily_rate_filtered)
+def calculate_kpis(df, df_selection=None):
+    def calculate_fail_rate(rejected, reviewed):
+        return (
+            rejected / reviewed
+        ) if reviewed != 0 else 0.0
 
-	# today = datetime.date.today().strftime('%Y-%m-%d')
-	today = datetime.date.today()
-	formatted_today = today.strftime('%Y-%m-%d')
-	today_data = df[df["validated_date"] == formatted_today] # dataframe for today data only
-	assets_reviewed_today = int(today_data["slrn"].nunique())
-	customers_reviewed_today = int(today_data["ac_no"].nunique())
-	assets_approved_today = int(today_data[today_data["approval_status"] == "Approved"]["slrn"].nunique())
-	assets_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["slrn"].nunique())
-	customers_approved_today = int(today_data[today_data["approval_status"] == "Approved"]["ac_no"].nunique())
-	customers_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["ac_no"].nunique())
-	fail_rate_today = (
-        customers_rejected_today / customers_reviewed_today
-    ) if customers_reviewed_today != 0 else 0.0
-	formatted_fail_rate_today = "{:.2%}".format(fail_rate_today)
+    def format_percentage(value):
+        return "{:.2%}".format(value)
 
-	yesterday = today - datetime.timedelta(days=1)
-	formatted_yesterday = yesterday.strftime('%Y-%m-%d')
-	yesterday_data = df[df["validated_date"] == formatted_yesterday] # dataframe for yesterday's data only
-	assets_reviewed_yesterday = int(yesterday_data["slrn"].nunique())
-	customers_reviewed_yesterday = int(yesterday_data["ac_no"].nunique())
-	assets_approved_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Approved"]["slrn"].nunique())
-	assets_rejected_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Rejected"]["slrn"].nunique())
-	customers_approved_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Approved"]["ac_no"].nunique())
-	customers_rejected_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Rejected"]["ac_no"].nunique())
-	fail_rate_yesterday = customers_rejected_yesterday / customers_reviewed_yesterday
-	formatted_fail_rate_yesterday = "{:.2%}".format(fail_rate_yesterday)
+    def format_float(value):
+        return "{:.2f}".format(value)
 
-	
+    today = datetime.date.today()
+    formatted_today = today.strftime('%Y-%m-%d')
+    yesterday = today - datetime.timedelta(days=1)
+    formatted_yesterday = yesterday.strftime('%Y-%m-%d')
+
+    overall_assets_reviewed = int(df["slrn"].nunique())
+    overall_customers_reviewed = int(df["ac_no"].nunique())
+    overall_assets_approved = int(df[df["approval_status"] == "Approved"]["slrn"].nunique())
+    overall_assets_rejected = int(df[df["approval_status"] == "Rejected"]["slrn"].nunique())
+    overall_customers_approved = int(df[df["approval_status"] == "Approved"]["ac_no"].nunique())
+    overall_customers_rejected = int(df[df["approval_status"] == "Rejected"]["ac_no"].nunique())
+    fail_rate_overall = calculate_fail_rate(overall_customers_rejected, overall_customers_reviewed)
+    formatted_fail_rate_overall = format_percentage(fail_rate_overall)
+    daily_rate_overall = calculate_daily_rate(df)
+    formatted_daily_rate_overall = format_float(daily_rate_overall)
+
+    kpis = {
+        "overall_assets_reviewed": overall_assets_reviewed,
+        "overall_customers_reviewed": overall_customers_reviewed,
+        "overall_assets_approved": overall_assets_approved,
+        "overall_assets_rejected": overall_assets_rejected,
+        "overall_customers_approved": overall_customers_approved,
+        "overall_customers_rejected": overall_customers_rejected,
+        "fail_rate_overall": formatted_fail_rate_overall,
+        "daily_rate_overall": formatted_daily_rate_overall,
+    }
+
+    if df_selection is not None:
+        filtered_overall_assets_reviewed = int(df_selection["slrn"].nunique())
+        filtered_overall_customers_reviewed = int(df_selection["ac_no"].nunique())
+        filtered_overall_assets_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["slrn"].nunique())
+        filtered_overall_assets_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["slrn"].nunique())
+        filtered_overall_customers_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["ac_no"].nunique())
+        filtered_overall_customers_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["ac_no"].nunique())
+        fail_rate_filtered = calculate_fail_rate(filtered_overall_customers_rejected, filtered_overall_customers_reviewed)
+        formatted_fail_rate_filtered = format_percentage(fail_rate_filtered)
+        daily_rate_filtered = calculate_daily_rate(df_selection)
+        formatted_daily_rate_filtered = format_float(daily_rate_filtered)
+
+        kpis.update({
+            "filtered_overall_assets_reviewed": filtered_overall_assets_reviewed,
+            "filtered_overall_customers_reviewed": filtered_overall_customers_reviewed,
+            "filtered_overall_assets_approved": filtered_overall_assets_approved,
+            "filtered_overall_assets_rejected": filtered_overall_assets_rejected,
+            "filtered_overall_customers_approved": filtered_overall_customers_approved,
+            "filtered_overall_customers_rejected": filtered_overall_customers_rejected,
+            "fail_rate_filtered": formatted_fail_rate_filtered,
+            "daily_rate_filtered": formatted_daily_rate_filtered,
+        })
+
+    today_data = df[df["validated_date"] == formatted_today]
+    assets_reviewed_today = int(today_data["slrn"].nunique())
+    customers_reviewed_today = int(today_data["ac_no"].nunique())
+    assets_approved_today = int(today_data[today_data["approval_status"] == "Approved"]["slrn"].nunique())
+    assets_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["slrn"].nunique())
+    customers_approved_today = int(today_data[today_data["approval_status"] == "Approved"]["ac_no"].nunique())
+    customers_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["ac_no"].nunique())
+    fail_rate_today = calculate_fail_rate(customers_rejected_today, customers_reviewed_today)
+    formatted_fail_rate_today = format_percentage(fail_rate_today)
+
+    yesterday_data = df[df["validated_date"] == formatted_yesterday]
+    assets_reviewed_yesterday = int(yesterday_data["slrn"].nunique())
+    customers_reviewed_yesterday = int(yesterday_data["ac_no"].nunique())
+    assets_approved_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Approved"]["slrn"].nunique())
+    assets_rejected_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Rejected"]["slrn"].nunique())
+    customers_approved_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Approved"]["ac_no"].nunique())
+    customers_rejected_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Rejected"]["ac_no"].nunique())
+    fail_rate_yesterday = calculate_fail_rate(customers_rejected_yesterday, customers_reviewed_yesterday)
+    formatted_fail_rate_yesterday = format_percentage(fail_rate_yesterday)
+
+    kpis.update({
+        "assets_reviewed_today": assets_reviewed_today,
+        "customers_reviewed_today": customers_reviewed_today,
+        "assets_approved_today": assets_approved_today,
+        "assets_rejected_today": assets_rejected_today,
+        "customers_approved_today": customers_approved_today,
+        "customers_rejected_today": customers_rejected_today,
+        "fail_rate_today": formatted_fail_rate_today,
+        "assets_reviewed_yesterday": assets_reviewed_yesterday,
+        "customers_reviewed_yesterday": customers_reviewed_yesterday,
+        "assets_approved_yesterday": assets_approved_yesterday,
+        "assets_rejected_yesterday": assets_rejected_yesterday,
+        "customers_approved_yesterday": customers_approved_yesterday,
+        "customers_rejected_yesterday": customers_rejected_yesterday,
+        "fail_rate_yesterday": formatted_fail_rate_yesterday,
+    })
+
+    return kpis
+
+#--------------------------------------------------------#
+#------------------------- MAIN -------------------------#
+#--------------------------------------------------------#
+def display_main_tab(df):
+	kpis = calculate_kpis(df)
+
+	overall_customers_reviewed = kpis["overall_customers_reviewed"]
+	overall_customers_approved = kpis["overall_customers_approved"]
+	overall_customers_rejected = kpis["overall_customers_rejected"]
+	overall_assets_reviewed = kpis["overall_assets_reviewed"]
+	overall_assets_approved = kpis["overall_assets_approved"]
+	overall_assets_rejected = kpis["overall_assets_rejected"]
+	formatted_fail_rate_overall = kpis["fail_rate_overall"]
+	formatted_daily_rate_overall = kpis["daily_rate_overall"]
+
+	customers_reviewed_today= kpis["customers_reviewed_today"]
+	customers_approved_today= kpis["customers_approved_today"]
+	customers_rejected_today= kpis["customers_rejected_today"]
+	assets_reviewed_today = kpis["assets_reviewed_today"]
+	assets_approved_today = kpis["assets_approved_today"]
+	assets_rejected_today = kpis["assets_rejected_today"]
+	customers_reviewed_yesterday = kpis["customers_reviewed_yesterday"]
+	customers_approved_yesterday = kpis["customers_approved_yesterday"]
+	customers_rejected_yesterday = kpis["customers_rejected_yesterday"]
+	assets_reviewed_yesterday = kpis["assets_reviewed_yesterday"]
+	assets_approved_yesterday = kpis["assets_approved_yesterday"]
+	assets_rejected_yesterday = kpis["assets_rejected_yesterday"]
+	formatted_fail_rate_today = kpis["fail_rate_today"]
+	formatted_fail_rate_yesterday = kpis["fail_rate_yesterday"]
+
+	st.markdown("<div style='text-align:left; font-size:25px; font-weight:bold;'>Main</div>", unsafe_allow_html=True)
+
+	ct1, ct2 = st.columns((5,5))
+	with ct1:
+		display_overall_metrics(
+			overall_customers_reviewed, overall_customers_approved, overall_customers_rejected, overall_assets_reviewed,
+			overall_assets_approved, overall_assets_rejected,
+			formatted_fail_rate_overall, formatted_daily_rate_overall
+		)
+
+	with ct2:
+		display_metrics_today(
+			customers_reviewed_today, customers_reviewed_yesterday,
+			customers_approved_today, customers_approved_yesterday,
+			customers_rejected_today, customers_rejected_yesterday,
+			assets_reviewed_today, assets_reviewed_yesterday,
+			assets_approved_today, assets_approved_yesterday,
+			assets_rejected_today, assets_rejected_yesterday,
+			formatted_fail_rate_today, formatted_fail_rate_yesterday
+		)
+
+	st.markdown("""---""")
+
+	st.checkbox("Use container width", value=True, key="use_main_container_width")
+	c1, c2 = st.columns((4,6))
+	with c1:
+		approved_df = df[df['approval_status'] == 'Approved']
+		rejected_df = df[df['approval_status'] == 'Rejected']
+
+		source_pivot = df.pivot_table(index="validated_by", values=['slrn', 'ac_no'], aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total')
+		source_pivot = source_pivot.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
+
+		source_pivot['Approved'] = approved_df.groupby('validated_by')['ac_no'].nunique()
+		source_pivot['Rejected'] = rejected_df.groupby('validated_by')['ac_no'].nunique()
+
+		source_pivot = source_pivot.fillna(0)
+		source_pivot = source_pivot.rename_axis(index={'validated_by': 'Validator'})
+
+		gb = GridOptionsBuilder()
+
+		gb.configure_column(
+			field="validated_by",
+			header_name="Validated By",
+			width=100,
+			pivot=True,
+		)
+
+		st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Breakdown By Validator (Overall)</div>", unsafe_allow_html=True)
+		st.dataframe(
+			source_pivot, 
+			height = 700,
+			use_container_width=st.session_state.use_main_container_width
+		)
+
+	with c2:
+		period_main = 'week_month_year'
+		weekly_perf = calculate_weekly_performance(df, period_main) 
+		title = "Customer-Building Weekly Breakdown"
+		container_width = st.session_state.use_main_container_width 
+		display_weekly_performance(
+			weekly_perf,
+			period_main, 
+			approved_df, 
+			rejected_df,
+			title,
+			container_width
+		)
+
+	st.markdown("""---""") 
+
+	if 'key' not in st.session_state:
+		st.session_state['use_filtered_wkly_container_width'] = True
+	with st.container():
+		display_weekly_results(df, container_width)
+
+#--------------------------------------------------------#
+#----------------------- FILTERED -----------------------#
+#--------------------------------------------------------#
+def display_filtered_tab(df, df_selection):
+	kpis = calculate_kpis(df, df_selection)
+
+	filtered_overall_customers_reviewed = kpis["filtered_overall_customers_reviewed"]
+	filtered_overall_customers_approved = kpis["filtered_overall_customers_approved"]
+	filtered_overall_customers_rejected = kpis["filtered_overall_customers_rejected"]
+	filtered_overall_assets_reviewed = kpis["filtered_overall_assets_reviewed"]
+	filtered_overall_assets_approved = kpis["filtered_overall_assets_approved"]
+	filtered_overall_assets_rejected = kpis["filtered_overall_assets_rejected"]
+	formatted_fail_rate_filtered = kpis["fail_rate_filtered"]
+	formatted_daily_rate_filtered = kpis["daily_rate_filtered"]
+
+	customers_reviewed_today= kpis["customers_reviewed_today"]
+	customers_approved_today= kpis["customers_approved_today"]
+	customers_rejected_today= kpis["customers_rejected_today"]
+	assets_reviewed_today = kpis["assets_reviewed_today"]
+	assets_approved_today = kpis["assets_approved_today"]
+	assets_rejected_today = kpis["assets_rejected_today"]
+	customers_reviewed_yesterday = kpis["customers_reviewed_yesterday"]
+	customers_approved_yesterday = kpis["customers_approved_yesterday"]
+	customers_rejected_yesterday = kpis["customers_rejected_yesterday"]
+	assets_reviewed_yesterday = kpis["assets_reviewed_yesterday"]
+	assets_approved_yesterday = kpis["assets_approved_yesterday"]
+	assets_rejected_yesterday = kpis["assets_rejected_yesterday"]
+	formatted_fail_rate_today = kpis["fail_rate_today"]
+	formatted_fail_rate_yesterday = kpis["fail_rate_yesterday"]
+
+	st.markdown("<div style='text-align:left; font-size:25px; font-weight:bold;'>Filtered</div>", unsafe_allow_html=True)
+	st.markdown("<div style='text-align:left; font-size:15px; font-weight:bold; font-style:italic;'>Figures here can be sliced and diced!</div>", unsafe_allow_html=True)
+
+	ct1, ct2 = st.columns((5,5))
+	with ct1:
+		display_overall_metrics(
+			filtered_overall_customers_reviewed, filtered_overall_customers_approved, filtered_overall_customers_rejected, filtered_overall_assets_reviewed,
+			filtered_overall_assets_approved, filtered_overall_assets_rejected,
+			formatted_fail_rate_filtered, formatted_daily_rate_filtered
+		)
+		
+	with ct2:
+		display_metrics_today(
+			customers_reviewed_today, customers_reviewed_yesterday,
+			customers_approved_today, customers_approved_yesterday,
+			customers_rejected_today, customers_rejected_yesterday,
+			assets_reviewed_today, assets_reviewed_yesterday,
+			assets_approved_today, assets_approved_yesterday,
+			assets_rejected_today, assets_rejected_yesterday,
+			formatted_fail_rate_today, formatted_fail_rate_yesterday
+		)
+
+	st.markdown("""---""")  
+
+	st.checkbox("Use container width", value=True, key="use_filtered_container_width")
+	c1, c2 = st.columns((4,6))
+	with c1:
+		approved_df_selection = df_selection[df_selection['approval_status'] == 'Approved']
+		rejected_df_selection = df_selection[df_selection['approval_status'] == 'Rejected']
+
+		if df_selection is None:
+			st.markdown("#### (No data available)")
+		else:
+			filtered_source_pivot = df_selection.pivot_table(index="validated_by", values=['slrn', 'ac_no'], aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total', fill_value=0)
+			filtered_source_pivot = filtered_source_pivot.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
+
+			# Calculate the unique counts for Approved and Rejected
+			filtered_source_pivot['Approved'] = approved_df_selection.groupby('validated_by')['ac_no'].nunique()
+			filtered_source_pivot['Rejected'] = rejected_df_selection.groupby('validated_by')['ac_no'].nunique()
+
+			# Fill NaN values with 0
+			filtered_source_pivot = filtered_source_pivot.fillna(0)
+			filtered_source_pivot = filtered_source_pivot.rename_axis(index={'validated_by': 'Validator'})
+
+			# Display the pivot table
+			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Breakdown By Validator (Filtered)</div>", unsafe_allow_html=True)
+			st.dataframe(
+				filtered_source_pivot,
+				height = 700,  
+				use_container_width=st.session_state.use_filtered_container_width
+			)
+
+	with c2:
+		period_fil = 'week_month'
+		weekly_perf = calculate_weekly_performance(df_selection, period_fil) 
+		title = "Customer-Building Weekly Breakdown (Filtered)"
+		container_width = st.session_state.use_filtered_container_width 
+		display_weekly_performance(
+			weekly_perf, 
+			period_fil,
+			approved_df_selection, 
+			rejected_df_selection,
+			title,
+			container_width
+		)
+
+	st.markdown("""---""") 
+
+	if 'key' not in st.session_state:
+		st.session_state['use_filtered_wkly_container_width'] = True
+	with st.container():
+		display_weekly_results(df, container_width)
+
+
+def display_metrics_tabs(df, df_selection):
 	st.markdown("<div style='text-align:center; font-size:30px; font-weight:bold;'>Metrics</div>", unsafe_allow_html=True)
 	st.markdown("""---""")
 
 	main_tab, filtered_tab = st.tabs(["Main", "Filtered"])
 
-	#--------------------------------------------------------#
-	#------------------------- MAIN -------------------------#
-	#--------------------------------------------------------#
 	with main_tab:
-		st.markdown("<div style='text-align:left; font-size:25px; font-weight:bold;'>Main</div>", unsafe_allow_html=True)
-		# st.markdown("""---""")
-		
-		ct1, ct2 = st.columns((5,5))
-		with ct1:
-			display_overall_metrics(
-				overall_customers_reviewed, overall_customers_approved, overall_customers_rejected, overall_assets_reviewed, 
-				overall_assets_approved, overall_assets_rejected,
-				formatted_fail_rate_overall, formatted_daily_rate_overall
-			)
+		display_main_tab(df)
 
-		with ct2:
-			display_metrics_today(
-				customers_reviewed_today, customers_reviewed_yesterday,
-				customers_approved_today, customers_approved_yesterday,
-				customers_rejected_today, customers_rejected_yesterday,
-				assets_reviewed_today, assets_reviewed_yesterday,
-				assets_approved_today, assets_approved_yesterday,
-				assets_rejected_today, assets_rejected_yesterday,
-				formatted_fail_rate_today, formatted_fail_rate_yesterday
-			)
-
-			
-		st.markdown("""---""")  
-
-		st.checkbox("Use container width", value=True, key="use_main_container_width")
-		c1, c2 = st.columns((4,6))
-		with c1:
-			# Filter the DataFrame for Approved and Rejected rows
-			approved_df = df[df['approval_status'] == 'Approved']
-			rejected_df = df[df['approval_status'] == 'Rejected']
-
-			# Calculate the unique counts for Customers and Buildings for each 'validated_by'
-			source_pivot = df.pivot_table(index="validated_by", values=['slrn', 'ac_no'], aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total')
-			source_pivot = source_pivot.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
-
-			# Calculate the unique counts for Approved and Rejected
-			source_pivot['Approved'] = approved_df.groupby('validated_by')['ac_no'].nunique()
-			source_pivot['Rejected'] = rejected_df.groupby('validated_by')['ac_no'].nunique()
-
-			# Fill NaN values with 0
-			source_pivot = source_pivot.fillna(0)
-			source_pivot = source_pivot.rename_axis(index={'validated_by': 'Validator'})
-			# source_pivot = source_pivot.reset_index().rename_axis(None, axis='columns')
-
-			gb = GridOptionsBuilder()
-
-			gb.configure_column(
-				field="validated_by",
-				header_name="Validated By",
-				width=100,
-				pivot=True,
-			)
-
-			# Display the pivot table
-			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Breakdown By Validator (Overall)</div>", unsafe_allow_html=True)
-			# AgGrid(source_pivot, use_container_width=st.session_state.use_main_container_width)
-			st.dataframe(
-				source_pivot, 
-				height = 700,
-				use_container_width=st.session_state.use_main_container_width
-			)
-
-		with c2:
-			period_main = 'week_month_year'
-			weekly_perf = calculate_weekly_performance(df, period_main) 
-			title = "Customer-Building Weekly Breakdown"
-			container_width = st.session_state.use_main_container_width 
-			display_weekly_performance(
-				weekly_perf,
-				period_main, 
-				approved_df, 
-				rejected_df,
-				title,
-				container_width
-			)
-		
-		st.markdown("""---""") 
-
-		if 'key' not in st.session_state:
-			st.session_state['use_filtered_wkly_container_width'] = True
-		with st.container():
-			display_weekly_results(df, container_width)
-
-	#--------------------------------------------------------#
-	#----------------------- FILTERED -----------------------#
-	#--------------------------------------------------------#
 	with filtered_tab:
-		st.markdown("<div style='text-align:left; font-size:25px; font-weight:bold;'>Filtered</div>", unsafe_allow_html=True)
-		st.markdown("<div style='text-align:left; font-size:15px; font-weight:bold; font-style:italic;'>Figures here can be sliced and diced!</div>", unsafe_allow_html=True)
-		# st.markdown("""---""")
-		
-		ct1, ct2 = st.columns((5,5))
-		with ct1:
-			display_overall_metrics(
-				filtered_overall_customers_reviewed, filtered_overall_customers_approved, filtered_overall_customers_rejected, filtered_overall_assets_reviewed, 
-				filtered_overall_assets_approved, filtered_overall_assets_rejected,
-				formatted_fail_rate_filtered, formatted_daily_rate_filtered
-			)
-			
-		with ct2:
-			display_metrics_today(
-				customers_reviewed_today, customers_reviewed_yesterday,
-				customers_approved_today, customers_approved_yesterday,
-				customers_rejected_today, customers_rejected_yesterday,
-				assets_reviewed_today, assets_reviewed_yesterday,
-				assets_approved_today, assets_approved_yesterday,
-				assets_rejected_today, assets_rejected_yesterday,
-				formatted_fail_rate_today, formatted_fail_rate_yesterday
-			)
-			
-
-		st.markdown("""---""")  
-
-		st.checkbox("Use container width", value=True, key="use_filtered_container_width")
-		c1, c2 = st.columns((4,6))
-		with c1:
-			approved_df_selection = df_selection[df_selection['approval_status'] == 'Approved']
-			rejected_df_selection = df_selection[df_selection['approval_status'] == 'Rejected']
-
-			if df_selection is None:
-				st.markdown("#### (No data available)")
-			else:
-				filtered_source_pivot = df_selection.pivot_table(index="validated_by", values=['slrn', 'ac_no'], aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total', fill_value=0)
-				filtered_source_pivot = filtered_source_pivot.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
-
-				# Calculate the unique counts for Approved and Rejected
-				filtered_source_pivot['Approved'] = approved_df_selection.groupby('validated_by')['ac_no'].nunique()
-				filtered_source_pivot['Rejected'] = rejected_df_selection.groupby('validated_by')['ac_no'].nunique()
-
-				# Fill NaN values with 0
-				filtered_source_pivot = filtered_source_pivot.fillna(0)
-				filtered_source_pivot = filtered_source_pivot.rename_axis(index={'validated_by': 'Validator'})
-
-				# Display the pivot table
-				st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Breakdown By Validator (Filtered)</div>", unsafe_allow_html=True)
-				st.dataframe(
-					filtered_source_pivot,
-					height = 700,  
-					use_container_width=st.session_state.use_filtered_container_width
-				)
-		
-		with c2:
-			period_fil = 'week_month'
-			weekly_perf = calculate_weekly_performance(df_selection, period_fil) 
-			title = "Customer-Building Weekly Breakdown (Filtered)"
-			container_width = st.session_state.use_filtered_container_width 
-			display_weekly_performance(
-				weekly_perf, 
-				period_fil,
-				approved_df_selection, 
-				rejected_df_selection,
-				title,
-				container_width
-			)
-		
-		st.markdown("""---""") 
-
-		if 'key' not in st.session_state:
-			st.session_state['use_filtered_wkly_container_width'] = True
-		with st.container():
-			display_weekly_results(df, container_width)
+		display_filtered_tab(df, df_selection)
 
 	st.markdown("""---""")  
-	
+
 	# Styling the KPI cards
 	if selected == 'AEDC':
 		style_metric_cards(border_left_color="blue",  box_shadow=True, border_radius_px=5, background_color="#FFF")
 	if selected == 'ECG':
 		style_metric_cards(border_left_color="red", box_shadow=True, border_radius_px=5, background_color="#FFF", )
-
-
