@@ -23,6 +23,7 @@ config.ini
 # Folders
 analysis
 logo
+trash
 
 # Code
 ecg_connection.py
@@ -35,3 +36,4 @@ data - Copy.xlsx
 aedc_logo.png
 app.py
 *.pyc
+*.ipynb
