@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 from PIL import Image
 
-from modules.ecg_connection import get_ecg_ex_cus_data_from_database
-from modules.ecg_connection import get_ecg_nw_cus_data_from_database
+from modules.connection_ecg import get_ecg_ex_cus_data_from_database
+from modules.connection_ecg import get_ecg_nw_cus_data_from_database
 from modules.menu import streamlit_menu
 from modules.metrics import display_metrics_tabs
 from modules.header import dashboard_header

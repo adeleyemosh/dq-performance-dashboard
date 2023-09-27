@@ -27,6 +27,8 @@ trash
 
 # Code
 ecg_connection.py
+connection_ecg.py
+connection_aedc.py
 dq.py
 dq_analysis.ipynb
 
