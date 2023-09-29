@@ -16,14 +16,6 @@ def show_raw_data(df_selection):
 def load_and_preprocess_data(new_customer_data, existing_customer_data):
     data = pd.concat([new_customer_data, existing_customer_data])
 
-    last_refresh_date = data["last_refresh_date"].iloc[0]
-    last_refresh_time = data["last_refresh_time"].iloc[0]
-
-    st.sidebar.markdown(
-        f"<p style='font-weight: bold;'>Last refreshed on: {last_refresh_date} at {last_refresh_time}</p>", 
-        unsafe_allow_html=True
-    )
-
     invalid_validators = [
         'DevAdmin', 
         'Christianbackend'

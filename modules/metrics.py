@@ -530,8 +530,3 @@ def display_metrics_tabs(df, df_selection):
 
 	st.markdown("""---""")  
 
-	# Styling the KPI cards
-	if selected == 'AEDC':
-		style_metric_cards(border_left_color="blue",  box_shadow=True, border_radius_px=5, background_color="#FFF")
-	if selected == 'ECG':
-		style_metric_cards(border_left_color="red", box_shadow=True, border_radius_px=5, background_color="#FFF", )

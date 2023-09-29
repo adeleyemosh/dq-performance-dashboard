@@ -1,98 +1,110 @@
 import streamlit as st
-import pandas as pd
 from PIL import Image
+from streamlit_extras.metric_cards import style_metric_cards
 
 from modules.connection_ecg import get_ecg_ex_cus_data_from_database
 from modules.connection_ecg import get_ecg_nw_cus_data_from_database
 from modules.connection_aedc import get_aedc_ex_cus_data_from_database
 from modules.connection_aedc import get_aedc_nw_cus_data_from_database
+from modules.data import show_raw_data
+from modules.data import load_and_preprocess_data
+from modules.filter import filter_data
 from modules.menu import streamlit_menu
 from modules.metrics import display_metrics_tabs
 from modules.header import dashboard_header
-from modules.data import show_raw_data
-from modules.filter import filter_data
 
+# Function to load and preprocess data
+def load_data(dashboard_type):
+    if dashboard_type == 'ECG':
+        nw_cus_df = get_ecg_nw_cus_data_from_database()
+        ex_cus_df = get_ecg_ex_cus_data_from_database()
+    elif dashboard_type == 'AEDC':
+        nw_cus_df = get_aedc_nw_cus_data_from_database()
+        ex_cus_df = get_aedc_ex_cus_data_from_database()
+    
+    df = load_and_preprocess_data(nw_cus_df, ex_cus_df)
+    df_selection = filter_data(df, dashboard_type)
+    return df, df_selection
 
 #--------------------------------------------------------#
 #-------------- PAGE CONFIGURATION SETUP ----------------#
 #--------------------------------------------------------#
 
 st.set_page_config(
-	page_title="DQ Performance Dashboard", 
+    page_title="DQ Performance Dashboard", 
     page_icon="📊", 
-	layout="wide",
-	initial_sidebar_state="collapsed"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-selected = streamlit_menu()
+DESIGN_NO = 2
+selected = streamlit_menu(design=DESIGN_NO)
 
-#--------------------------------------------------------#
-#------------------------ ECG ---------------------------#
-#--------------------------------------------------------#
-ecg_nw_cus_df = get_ecg_nw_cus_data_from_database()
-ecg_ex_cus_df = get_ecg_ex_cus_data_from_database()
+# Load data and filter selection based on the selected dashboard
+if selected == 'ECG':
+    ecg_df, ecg_df_selection = load_data('ECG')
+elif selected == 'AEDC':
+    aedc_df, aedc_df_selection = load_data('AEDC')
 
-ecg_df = pd.concat([
-	ecg_nw_cus_df,
-	ecg_ex_cus_df
-])
-
-
-last_refresh_date = ecg_df["last_refresh_date"].iloc[0]
-last_refresh_time = ecg_df["last_refresh_time"].iloc[0]
-
-st.sidebar.markdown(f"<p style='font-weight: bold;'>Last refreshed on: {last_refresh_date} at {last_refresh_time}</p>", unsafe_allow_html=True)
-
-#--------- VARIABLE DEFINITION ---------#
-invalid_validators = [
-    'DevAdmin', 
-    'Christianbackend', 
-]
-
-ecg_df = ecg_df[
-    (ecg_df['validated_by'].notnull()) & 
-    (~ecg_df['validated_by'].isin(invalid_validators))
-]
-
-ecg_df["validated_date"] = pd.to_datetime(ecg_df["validated_date"])
-ecg_df["val_date"] = ecg_df["validated_date"].dt.strftime('%Y-%m-%d')
-ecg_df['year'] = pd.DatetimeIndex(ecg_df['validated_date']).year
-ecg_df['month'] = pd.DatetimeIndex(ecg_df['validated_date']).month  
-
-validated_by_ref = ecg_df["validated_by"]
-source_tag = ecg_df["customer_status"]
-year_ref = ecg_df['year']
-month_ref = ecg_df['month']
-
-ecg_df_selection = filter_data(ecg_df)
+# Logos
+bps_logo = Image.open("logo/bps_logo.png")
+ecg_logo = Image.open("logo/ecg_logo.png")
+aedc_logo = Image.open("logo/aedc_logo.png")
 
 #--------------------------------------------------------#
 #---------------------- ECG MAIN ------------------------#
 #--------------------------------------------------------#
 
 def ecg():
-	dashboard_header(
-		image1 = Image.open("logo/bps_logo.png"), 
-		image2 = Image.open("logo/ecg_logo.png"), 
-		title="ECG Dashboard"
-	)
-	display_metrics_tabs(ecg_df, ecg_df_selection)
-	show_raw_data(ecg_df_selection)
+    dashboard_header(
+        image1 = bps_logo, 
+        image2 = ecg_logo, 
+        title="ECG Dashboard"
+    )
+    display_metrics_tabs(ecg_df, ecg_df_selection)
+    show_raw_data(ecg_df_selection)
 
-	#Display Filters
-	# filter_data(ecg_df)
+#--------------------------------------------------------#
+#---------------------- AEDC MAIN -----------------------#
+#--------------------------------------------------------#
 
+def aedc():
+    dashboard_header(
+        image1 = bps_logo, 
+        image2 = aedc_logo, 
+        title="AEDC Dashboard"
+    )
+    display_metrics_tabs(aedc_df, aedc_df_selection)
+    show_raw_data(aedc_df_selection)
+
+#--------------------------------------------------------#
+#------------------- KPI CARD STYLING -------------------#
+#--------------------------------------------------------#
+# Apply styles based on the selected dashboard
+if selected == 'ECG':
+    style_metric_cards(
+        border_left_color="red", 
+        box_shadow=True, 
+        border_radius_px=5, 
+        background_color="#FFF"
+    )
+elif selected == 'AEDC':
+    style_metric_cards(
+        border_left_color="blue",  
+        box_shadow=True, 
+        border_radius_px=5, 
+        background_color="#FFF"
+    )
 
 #--------------------------------------------------------#
 #------------------ MAIN FUNCTION CALL ------------------#
 #--------------------------------------------------------#
 if selected == "ECG":
-	if __name__ == "__main__":
-		ecg()
-# if selected == "AEDC":
-# 	if __name__ == "__main__":
-# 		aedc()
-
+    if __name__ == "__main__":
+        ecg()
+elif selected == "AEDC":
+    if __name__ == "__main__":
+        aedc()
 
 #--------------------------------------------------------#
 #---------------- HIDE STREAMLIT STYLE ------------------#
