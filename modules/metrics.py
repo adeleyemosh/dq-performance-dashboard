@@ -529,4 +529,3 @@ def display_metrics_tabs(df, df_selection):
 		display_filtered_tab(df, df_selection)
 
 	st.markdown("""---""")  
-
