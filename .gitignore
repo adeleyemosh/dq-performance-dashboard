@@ -28,10 +28,11 @@ trash
 
 # Code
 ecg_connection.py
-connection_ecg.py
-connection_aedc.py
+# connection_ecg.py
+# connection_aedc.py
 dq.py
 dq_analysis.ipynb
+sql_queries.py
 
 __pycache__
 data.xlsx

@@ -2,9 +2,8 @@ import streamlit as st
 import datetime
 import pandas as pd
 
-#--------------------------------------------------------#
-#---------------------- FILTER --------------------------#
-#--------------------------------------------------------#
+# FILTER 
+###################################################
 today = datetime.datetime.now().date()
 default_start = datetime.datetime(today.year, today.month, 1).date()
 

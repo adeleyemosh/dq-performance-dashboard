@@ -2,12 +2,9 @@ import streamlit as st
 from PIL import Image
 from streamlit_extras.metric_cards import style_metric_cards
 
-from modules.connection_ecg import get_ecg_ex_cus_data_from_database
-from modules.connection_ecg import get_ecg_nw_cus_data_from_database
-from modules.connection_aedc import get_aedc_ex_cus_data_from_database
-from modules.connection_aedc import get_aedc_nw_cus_data_from_database
-from modules.data import show_raw_data
-from modules.data import load_and_preprocess_data
+from modules.connection_ecg import *
+from modules.connection_aedc import *
+from modules.data import *
 from modules.filter import filter_data
 from modules.menu import streamlit_menu
 from modules.metrics import display_metrics_tabs
