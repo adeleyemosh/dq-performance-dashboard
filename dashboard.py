@@ -13,7 +13,20 @@ from modules.menu import streamlit_menu
 from modules.metrics import display_metrics_tabs
 from modules.header import dashboard_header
 
+# PAGE CONFIGURATION SETUP 
+###################################################
+st.set_page_config(
+    page_title="DQ Performance Dashboard", 
+    page_icon="📊", 
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+DESIGN_NO = 2
+selected = streamlit_menu(design=DESIGN_NO)
+
 # Function to load and preprocess data
+###################################################
 def load_data(dashboard_type):
     if dashboard_type == 'ECG':
         nw_cus_df = get_ecg_nw_cus_data_from_database()
@@ -26,20 +39,6 @@ def load_data(dashboard_type):
     df_selection = filter_data(df, dashboard_type)
     return df, df_selection
 
-#--------------------------------------------------------#
-#-------------- PAGE CONFIGURATION SETUP ----------------#
-#--------------------------------------------------------#
-
-st.set_page_config(
-    page_title="DQ Performance Dashboard", 
-    page_icon="📊", 
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-DESIGN_NO = 2
-selected = streamlit_menu(design=DESIGN_NO)
-
 # Load data and filter selection based on the selected dashboard
 if selected == 'ECG':
     ecg_df, ecg_df_selection = load_data('ECG')
@@ -51,10 +50,8 @@ bps_logo = Image.open("logo/bps_logo.png")
 ecg_logo = Image.open("logo/ecg_logo.png")
 aedc_logo = Image.open("logo/aedc_logo.png")
 
-#--------------------------------------------------------#
-#---------------------- ECG MAIN ------------------------#
-#--------------------------------------------------------#
-
+# ECG MAIN 
+###################################################
 def ecg():
     dashboard_header(
         image1 = bps_logo, 
@@ -64,10 +61,8 @@ def ecg():
     display_metrics_tabs(ecg_df, ecg_df_selection)
     show_raw_data(ecg_df_selection)
 
-#--------------------------------------------------------#
-#---------------------- AEDC MAIN -----------------------#
-#--------------------------------------------------------#
-
+# AEDC MAIN
+###################################################
 def aedc():
     dashboard_header(
         image1 = bps_logo, 
@@ -77,9 +72,8 @@ def aedc():
     display_metrics_tabs(aedc_df, aedc_df_selection)
     show_raw_data(aedc_df_selection)
 
-#--------------------------------------------------------#
-#------------------- KPI CARD STYLING -------------------#
-#--------------------------------------------------------#
+# KPI CARD STYLING
+###################################################
 # Apply styles based on the selected dashboard
 if selected == 'ECG':
     style_metric_cards(
@@ -96,9 +90,8 @@ elif selected == 'AEDC':
         background_color="#FFF"
     )
 
-#--------------------------------------------------------#
-#------------------ MAIN FUNCTION CALL ------------------#
-#--------------------------------------------------------#
+# MAIN FUNCTION CALL
+###################################################
 if selected == "ECG":
     if __name__ == "__main__":
         ecg()
@@ -106,9 +99,8 @@ elif selected == "AEDC":
     if __name__ == "__main__":
         aedc()
 
-#--------------------------------------------------------#
-#---------------- HIDE STREAMLIT STYLE ------------------#
-#--------------------------------------------------------#
+# HIDE STREAMLIT STYLE 
+###################################################
 hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
