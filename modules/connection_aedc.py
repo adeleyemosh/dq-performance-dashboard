@@ -4,8 +4,8 @@ import pyodbc
 import datetime
 
 from modules.columns import *
-from sql_queries import aedc_nw_cus_query
-from sql_queries import aedc_ex_cus_query
+from .sql_queries import aedc_nw_cus_query
+from .sql_queries import aedc_ex_cus_query
 
 # AEDC
 ###################################################

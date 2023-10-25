@@ -4,8 +4,8 @@ import pyodbc
 import datetime
 
 from modules.columns import *
-from sql_queries import ecg_nw_cus_query
-from sql_queries import ecg_ex_cus_query
+from .sql_queries import ecg_nw_cus_query
+from .sql_queries import ecg_ex_cus_query
 
 # ECG 
 ###################################################
