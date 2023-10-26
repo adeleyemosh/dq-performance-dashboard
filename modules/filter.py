@@ -6,7 +6,6 @@ import pandas as pd
 ###################################################
 today = datetime.datetime.now().date()
 default_start = datetime.datetime(today.year, today.month, 1).date()
-current_month = datetime.datetime.now().month
 
 def filter_data(data, title):
     last_refresh_date = data["last_refresh_date"].iloc[0]
@@ -31,15 +30,16 @@ def filter_data(data, title):
         "Select a start date:", 
         key=date_range_start_key, 
         value=default_start
-    )
+    )        
     
-    data['val_date'] = pd.to_datetime(data['val_date']).dt.date        
     date_range_end = st.sidebar.date_input(
         "Select an end date:", 
         key=date_range_end_key, 
         value=today
     )
 
+    data['val_date'] = pd.to_datetime(data['val_date']).dt.date
+    
     filtered_data = data[
         (data["val_date"] >= date_range_start) &  
         (data["val_date"] <= date_range_end)
@@ -76,8 +76,6 @@ def filter_data(data, title):
         default=validated_bys,
         key=selected_validated_bys_key
     )
-
-
 
     data_selection = filtered_data[
         (filtered_data["month"].isin(selected_months)) &
