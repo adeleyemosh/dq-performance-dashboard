@@ -6,6 +6,7 @@ import pandas as pd
 ###################################################
 today = datetime.datetime.now().date()
 default_start = datetime.datetime(today.year, today.month, 1).date()
+current_month = datetime.datetime.now().month
 
 def filter_data(data, title):
     last_refresh_date = data["last_refresh_date"].iloc[0]
@@ -31,14 +32,20 @@ def filter_data(data, title):
         key=date_range_start_key, 
         value=default_start
     )
-        
+    
+    data['val_date'] = pd.to_datetime(data['val_date']).dt.date        
     date_range_end = st.sidebar.date_input(
         "Select an end date:", 
         key=date_range_end_key, 
         value=today
     )
 
-    months = data["month"].unique()
+    filtered_data = data[
+        (data["val_date"] >= date_range_start) &  
+        (data["val_date"] <= date_range_end)
+    ]
+
+    months = filtered_data["month"].unique()
     selected_months = st.sidebar.multiselect(
         "Select Month:", 
         months, 
@@ -46,7 +53,7 @@ def filter_data(data, title):
         key=selected_months_key
     )
 
-    years = data["year"].unique()
+    years = filtered_data["year"].unique()
     selected_years = st.sidebar.multiselect(
         "Select Year:", 
         years, 
@@ -54,7 +61,7 @@ def filter_data(data, title):
         key=selected_years_key
     )
 
-    source_tags = data["customer_status"].unique()
+    source_tags = filtered_data["customer_status"].unique()
     selected_source_tags = st.sidebar.multiselect(
         "Select Customer Status:", 
         source_tags, 
@@ -62,7 +69,7 @@ def filter_data(data, title):
         key=selected_source_tags_key
     )
 
-    validated_bys = data["validated_by"].unique()
+    validated_bys = filtered_data["validated_by"].unique()
     selected_validated_bys = st.sidebar.multiselect(
         "Select Validator:", 
         validated_bys, 
@@ -70,15 +77,13 @@ def filter_data(data, title):
         key=selected_validated_bys_key
     )
 
-    data['val_date'] = pd.to_datetime(data['val_date']).dt.date
 
-    data_selection = data[
-        (data["val_date"] >= date_range_start) &  
-        (data["val_date"] <= date_range_end) &
-        (data["month"].isin(selected_months)) &
-        (data["year"].isin(selected_years)) &
-        (data["validated_by"].isin(selected_validated_bys)) &
-        (data["customer_status"].isin(selected_source_tags)) 
+
+    data_selection = filtered_data[
+        (filtered_data["month"].isin(selected_months)) &
+        (filtered_data["year"].isin(selected_years)) &
+        (filtered_data["validated_by"].isin(selected_validated_bys)) &
+        (filtered_data["customer_status"].isin(selected_source_tags)) 
     ]
 
     st.sidebar.markdown('''
