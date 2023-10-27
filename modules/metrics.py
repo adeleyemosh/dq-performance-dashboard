@@ -7,8 +7,6 @@ from st_aggrid import AgGrid, GridOptionsBuilder
 
 from modules.menu import streamlit_menu
 
-# 1=sidebar menu, 2=horizontal menu, 3=horizontal menu w/ custom menu
-# DESIGN_NO = 2
 selected = streamlit_menu()
 
 def calculate_daily_rate(dataframe):
@@ -307,9 +305,8 @@ def calculate_kpis(df, df_selection=None):
 
     return kpis
 
-#--------------------------------------------------------#
-#------------------------- MAIN -------------------------#
-#--------------------------------------------------------#
+# MAIN 
+###################################################
 def display_main_tab(df):
 	kpis = calculate_kpis(df)
 
@@ -412,9 +409,8 @@ def display_main_tab(df):
 	with st.container():
 		display_weekly_results(df, container_width)
 
-#--------------------------------------------------------#
-#----------------------- FILTERED -----------------------#
-#--------------------------------------------------------#
+# FILTERED 
+###################################################
 def display_filtered_tab(df, df_selection):
 	kpis = calculate_kpis(df, df_selection)
 
