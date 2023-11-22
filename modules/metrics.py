@@ -13,7 +13,7 @@ def calculate_daily_rate(dataframe):
 	earliest_date = dataframe['validated_date'].min()
 	latest_date = dataframe['validated_date'].max()
 
-	overall_customers_reviewed = int(dataframe["ac_no"].nunique())
+	overall_customers_reviewed = int(dataframe["meter_no"].nunique())
 	days_diff = (latest_date - earliest_date).days + 1
 	daily_rate = overall_customers_reviewed / days_diff
 
@@ -67,14 +67,14 @@ def display_overall_metrics(
 def calculate_weekly_performance(filtered_data, period):
 	weekly_perf = filtered_data.pivot_table(
 		index=[period],
-		values=['slrn', 'ac_no'], 
-		aggfunc={"slrn": "nunique", "ac_no": "nunique"}, 
+		values=['slrn', "meter_no"], 
+		aggfunc={"slrn": "nunique", "meter_no": "nunique"}, 
 		margins=False, 
 		margins_name='Total', 
 		fill_value=0
 	).reset_index()  
 
-	weekly_perf = weekly_perf.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
+	weekly_perf = weekly_perf.rename(columns={"slrn": "Buildings", "meter_no": "Customers"})
 					
 	weekly_perf[period] = weekly_perf[period].astype(str)
 
@@ -115,18 +115,18 @@ def calculate_weekly_performance(filtered_data, period):
 def display_weekly_performance(weekly_perf, period, approved_df, rejected_df, title, container_width):
     # Merge with approved_df and rejected_df on period column
     weekly_perf = weekly_perf.merge(
-        approved_df.groupby(period)['ac_no'].nunique().reset_index(), on=period,
+        approved_df.groupby(period)["meter_no"].nunique().reset_index(), on=period,
         how='left',
         suffixes=('', '_approved')
     )
     weekly_perf = weekly_perf.merge(
-        rejected_df.groupby(period)['ac_no'].nunique().reset_index(), on=period,
+        rejected_df.groupby(period)["meter_no"].nunique().reset_index(), on=period,
         how='left',
         suffixes=('', '_rejected')
     )
 
     # Rename the columns
-    weekly_perf = weekly_perf.rename(columns={'ac_no': 'Approved', 'ac_no_rejected': 'Rejected'})
+    weekly_perf = weekly_perf.rename(columns={"meter_no": 'Approved', 'ac_no_rejected': 'Rejected'})
 
     # Fill NaN values with 0
     weekly_perf = weekly_perf.fillna(0)
@@ -150,8 +150,8 @@ def calculate_week_month_metric(df, period):
 	]
 
 	# Calculate distinct counts for 'Approved' and 'Rejected'
-	approved_counts = filtered_df[filtered_df['approval_status'] == 'Approved'].groupby(['validated_by', 'week_month'])['ac_no'].nunique()
-	rejected_counts = filtered_df[filtered_df['approval_status'] == 'Rejected'].groupby(['validated_by', 'week_month'])['ac_no'].nunique()
+	approved_counts = filtered_df[filtered_df['approval_status'] == 'Approved'].groupby(['validated_by', 'week_month'])["meter_no"].nunique()
+	rejected_counts = filtered_df[filtered_df['approval_status'] == 'Rejected'].groupby(['validated_by', 'week_month'])["meter_no"].nunique()
 
 	# Fill missing values with 0
 	approved_counts = approved_counts.unstack().fillna(0)
@@ -160,8 +160,8 @@ def calculate_week_month_metric(df, period):
 	pivot_ac_no_slrn = filtered_df.pivot_table(
 		index='validated_by',
 		columns='week_month',
-		values=['ac_no', 'slrn'],
-		aggfunc={'ac_no': pd.Series.nunique, 'slrn': 'nunique'},
+		values=["meter_no", 'slrn'],
+		aggfunc={"meter_no": pd.Series.nunique, 'slrn': 'nunique'},
 		fill_value=0,
 		margins=True,
 		margins_name='Grand Total'
@@ -176,7 +176,7 @@ def calculate_week_month_metric(df, period):
 	pivot = pd.concat([pivot_ac_no_slrn, pivot_approved_rejected], axis=1)
 
 	pivot = pivot.rename_axis(index={'week_month': 'Week - Month', 'validated_by': 'Validator'})
-	pivot = pivot.rename(columns={'ac_no': 'Customers', 'slrn': 'Buildings'})
+	pivot = pivot.rename(columns={"meter_no": 'Customers', 'slrn': 'Buildings'})
 
 	pivot.columns.names = [None] * len(pivot.columns.names)
 
@@ -222,11 +222,11 @@ def calculate_kpis(df, df_selection=None):
     formatted_yesterday = yesterday.strftime('%Y-%m-%d')
 
     overall_assets_reviewed = int(df["slrn"].nunique())
-    overall_customers_reviewed = int(df["ac_no"].nunique())
+    overall_customers_reviewed = int(df["meter_no"].nunique())
     overall_assets_approved = int(df[df["approval_status"] == "Approved"]["slrn"].nunique())
     overall_assets_rejected = int(df[df["approval_status"] == "Rejected"]["slrn"].nunique())
-    overall_customers_approved = int(df[df["approval_status"] == "Approved"]["ac_no"].nunique())
-    overall_customers_rejected = int(df[df["approval_status"] == "Rejected"]["ac_no"].nunique())
+    overall_customers_approved = int(df[df["approval_status"] == "Approved"]["meter_no"].nunique())
+    overall_customers_rejected = int(df[df["approval_status"] == "Rejected"]["meter_no"].nunique())
     fail_rate_overall = calculate_fail_rate(overall_customers_rejected, overall_customers_reviewed)
     formatted_fail_rate_overall = format_percentage(fail_rate_overall)
     daily_rate_overall = calculate_daily_rate(df)
@@ -245,11 +245,11 @@ def calculate_kpis(df, df_selection=None):
 
     if df_selection is not None:
         filtered_overall_assets_reviewed = int(df_selection["slrn"].nunique())
-        filtered_overall_customers_reviewed = int(df_selection["ac_no"].nunique())
+        filtered_overall_customers_reviewed = int(df_selection["meter_no"].nunique())
         filtered_overall_assets_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["slrn"].nunique())
         filtered_overall_assets_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["slrn"].nunique())
-        filtered_overall_customers_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["ac_no"].nunique())
-        filtered_overall_customers_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["ac_no"].nunique())
+        filtered_overall_customers_approved = int(df_selection[df_selection["approval_status"] == "Approved"]["meter_no"].nunique())
+        filtered_overall_customers_rejected = int(df_selection[df_selection["approval_status"] == "Rejected"]["meter_no"].nunique())
         fail_rate_filtered = calculate_fail_rate(filtered_overall_customers_rejected, filtered_overall_customers_reviewed)
         formatted_fail_rate_filtered = format_percentage(fail_rate_filtered)
         daily_rate_filtered = calculate_daily_rate(df_selection)
@@ -268,21 +268,21 @@ def calculate_kpis(df, df_selection=None):
 
     today_data = df[df["validated_date"] == formatted_today]
     assets_reviewed_today = int(today_data["slrn"].nunique())
-    customers_reviewed_today = int(today_data["ac_no"].nunique())
+    customers_reviewed_today = int(today_data["meter_no"].nunique())
     assets_approved_today = int(today_data[today_data["approval_status"] == "Approved"]["slrn"].nunique())
     assets_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["slrn"].nunique())
-    customers_approved_today = int(today_data[today_data["approval_status"] == "Approved"]["ac_no"].nunique())
-    customers_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["ac_no"].nunique())
+    customers_approved_today = int(today_data[today_data["approval_status"] == "Approved"]["meter_no"].nunique())
+    customers_rejected_today = int(today_data[today_data["approval_status"] == "Rejected"]["meter_no"].nunique())
     fail_rate_today = calculate_fail_rate(customers_rejected_today, customers_reviewed_today)
     formatted_fail_rate_today = format_percentage(fail_rate_today)
 
     yesterday_data = df[df["validated_date"] == formatted_yesterday]
     assets_reviewed_yesterday = int(yesterday_data["slrn"].nunique())
-    customers_reviewed_yesterday = int(yesterday_data["ac_no"].nunique())
+    customers_reviewed_yesterday = int(yesterday_data["meter_no"].nunique())
     assets_approved_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Approved"]["slrn"].nunique())
     assets_rejected_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Rejected"]["slrn"].nunique())
-    customers_approved_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Approved"]["ac_no"].nunique())
-    customers_rejected_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Rejected"]["ac_no"].nunique())
+    customers_approved_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Approved"]["meter_no"].nunique())
+    customers_rejected_yesterday = int(yesterday_data[yesterday_data["approval_status"] == "Rejected"]["meter_no"].nunique())
     fail_rate_yesterday = calculate_fail_rate(customers_rejected_yesterday, customers_reviewed_yesterday)
     formatted_fail_rate_yesterday = format_percentage(fail_rate_yesterday)
 
@@ -363,11 +363,11 @@ def display_main_tab(df):
 		approved_df = df[df['approval_status'] == 'Approved']
 		rejected_df = df[df['approval_status'] == 'Rejected']
 
-		source_pivot = df.pivot_table(index="validated_by", values=['slrn', 'ac_no'], aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total')
-		source_pivot = source_pivot.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
+		source_pivot = df.pivot_table(index="validated_by", values=['slrn', "meter_no"], aggfunc={"slrn": "nunique", "meter_no": "nunique"}, margins=False, margins_name='Total')
+		source_pivot = source_pivot.rename(columns={"slrn": "Buildings", "meter_no": "Customers"})
 
-		source_pivot['Approved'] = approved_df.groupby('validated_by')['ac_no'].nunique()
-		source_pivot['Rejected'] = rejected_df.groupby('validated_by')['ac_no'].nunique()
+		source_pivot['Approved'] = approved_df.groupby('validated_by')["meter_no"].nunique()
+		source_pivot['Rejected'] = rejected_df.groupby('validated_by')["meter_no"].nunique()
 
 		source_pivot = source_pivot.fillna(0)
 		source_pivot = source_pivot.rename_axis(index={'validated_by': 'Validator'})
@@ -471,12 +471,12 @@ def display_filtered_tab(df, df_selection):
 		if df_selection is None:
 			st.markdown("#### (No data available)")
 		else:
-			filtered_source_pivot = df_selection.pivot_table(index="validated_by", values=['slrn', 'ac_no'], aggfunc={"slrn": "nunique", "ac_no": "nunique"}, margins=False, margins_name='Total', fill_value=0)
-			filtered_source_pivot = filtered_source_pivot.rename(columns={"slrn": "Buildings", "ac_no": "Customers"})
+			filtered_source_pivot = df_selection.pivot_table(index="validated_by", values=['slrn', "meter_no"], aggfunc={"slrn": "nunique", "meter_no": "nunique"}, margins=False, margins_name='Total', fill_value=0)
+			filtered_source_pivot = filtered_source_pivot.rename(columns={"slrn": "Buildings", "meter_no": "Customers"})
 
 			# Calculate the unique counts for Approved and Rejected
-			filtered_source_pivot['Approved'] = approved_df_selection.groupby('validated_by')['ac_no'].nunique()
-			filtered_source_pivot['Rejected'] = rejected_df_selection.groupby('validated_by')['ac_no'].nunique()
+			filtered_source_pivot['Approved'] = approved_df_selection.groupby('validated_by')["meter_no"].nunique()
+			filtered_source_pivot['Rejected'] = rejected_df_selection.groupby('validated_by')["meter_no"].nunique()
 
 			# Fill NaN values with 0
 			filtered_source_pivot = filtered_source_pivot.fillna(0)
