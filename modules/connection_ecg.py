@@ -24,6 +24,21 @@ def ecg_init_connection():
 
 conn = ecg_init_connection()
 
+@st.cache_resource
+def v2_init_connection():
+    return pyodbc.connect(
+        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="
+        + st.secrets["v2_server"]
+        + ";DATABASE="
+        + st.secrets["v2_database"]
+        + ";UID="
+        + st.secrets["v2_username"]
+        + ";PWD="
+        + st.secrets["v2_password"]
+    )
+
+conn_v2 = v2_init_connection()
+
 @st.cache_data(ttl=None, show_spinner="Fetching existing customer data from ECG Database...")
 def get_ecg_ex_cus_data_from_database():
 	ecg_ex_cus_df = pd.read_sql(ecg_ex_cus_query, conn)
