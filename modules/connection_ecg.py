@@ -6,6 +6,7 @@ import datetime
 from modules.columns import *
 from .sql_queries import ecg_nw_cus_query
 from .sql_queries import ecg_ex_cus_query
+from .sql_queries import ecg_v2_cus_query
 
 # ECG 
 ###################################################
@@ -77,3 +78,23 @@ def get_ecg_nw_cus_data_from_database():
 
 	st.success("Fetched ECG New Customer data from Database!")
 	return ecg_nw_cus_df
+
+@st.cache_data(ttl=None, show_spinner="Fetching customer data from ECG V2 Database...")
+def get_ecg_cus_data_from_database():
+	ecg_cus_df = pd.read_sql(ecg_v2_cus_query, conn_v2)
+	# Get the current date and time
+	now = datetime.datetime.now()
+	last_refresh_date = now.date().strftime("%Y-%m-%d")
+	last_refresh_time = now.time().strftime("%H:%M:%S")
+
+
+	# Add the last refresh date and time to the dataframe
+	ecg_cus_df["last_refresh_date"] = last_refresh_date
+	ecg_cus_df["last_refresh_time"] = last_refresh_time
+
+	ecg_cus_df['validated_date'] = pd.to_datetime(ecg_cus_df['validated_date'])
+	ecg_cus_df['week_month'] = ecg_cus_df.apply(calculate_week_month, axis=1)
+	ecg_cus_df['week_month_year'] = ecg_cus_df.apply(calculate_week_month_year, axis=1)
+
+	st.success("Fetched ECG V2 Customer data from Database!")
+	return ecg_cus_df
