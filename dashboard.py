@@ -28,11 +28,12 @@ def load_data(dashboard_type):
     if dashboard_type == 'ECG':
         nw_cus_df = get_ecg_nw_cus_data_from_database()
         ex_cus_df = get_ecg_ex_cus_data_from_database()
+        v2_cus_df = get_ecg_cus_data_from_database()
     elif dashboard_type == 'AEDC':
         nw_cus_df = get_aedc_nw_cus_data_from_database()
         ex_cus_df = get_aedc_ex_cus_data_from_database()
     
-    df = load_and_preprocess_data(nw_cus_df, ex_cus_df)
+    df = load_and_preprocess_data(nw_cus_df, ex_cus_df, v2_cus_df)
     df_selection = filter_data(df, dashboard_type)
     return df, df_selection
 
