@@ -16,7 +16,7 @@ def show_raw_data(df_selection):
 def load_and_preprocess_data(new_customer_data, existing_customer_data, v2_cus_data):
     data = pd.concat([new_customer_data, existing_customer_data, v2_cus_data])
 
-    data = data.drop_duplicates(subset=['meter_no'])
+    # data = data.drop_duplicates(subset=['meter_no'])
     
     invalid_validators = [
         'DevAdmin', 
