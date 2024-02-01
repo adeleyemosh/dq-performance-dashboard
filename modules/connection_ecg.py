@@ -59,6 +59,7 @@ def get_ecg_ex_cus_data_from_database():
 	st.success("Fetched ECG Customer data from Database!")
 	return ecg_ex_cus_df
 
+
 @st.cache_data(ttl=None, show_spinner="Fetching new customer data from ECG Database...")
 def get_ecg_nw_cus_data_from_database():
 	ecg_nw_cus_df = pd.read_sql(ecg_nw_cus_query, conn)
@@ -78,6 +79,7 @@ def get_ecg_nw_cus_data_from_database():
 
 	st.success("Fetched ECG New Customer data from Database!")
 	return ecg_nw_cus_df
+
 
 @st.cache_data(ttl=None, show_spinner="Fetching customer data from ECG V2 Database...")
 def get_ecg_cus_data_from_database():
