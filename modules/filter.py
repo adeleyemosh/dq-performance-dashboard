@@ -25,6 +25,7 @@ def filter_data(data, title):
     selected_years_key = f'selected_years_{title}'
     selected_source_tags_key = f'selected_source_tags_{title}'
     selected_validated_bys_key = f'selected_validated_bys_{title}'
+    selected_distro_key = f'selected_distro_{title}'
 
     date_range_start = st.sidebar.date_input(
         "Select a start date:", 
@@ -45,6 +46,14 @@ def filter_data(data, title):
         (data["val_date"] <= date_range_end)
     ]
 
+    distro = filtered_data["distro"].unique()
+    selected_distro = st.sidebar.multiselect(
+        "Select Distro:", 
+        distro, 
+        default=distro,
+        key=selected_distro_key
+    )
+    
     months = filtered_data["month"].unique()
     selected_months = st.sidebar.multiselect(
         "Select Month:", 
@@ -81,7 +90,8 @@ def filter_data(data, title):
         (filtered_data["month"].isin(selected_months)) &
         (filtered_data["year"].isin(selected_years)) &
         (filtered_data["validated_by"].isin(selected_validated_bys)) &
-        (filtered_data["customer_status"].isin(selected_source_tags)) 
+        (filtered_data["customer_status"].isin(selected_source_tags)) &
+        (filtered_data["distro"].isin(selected_distro))
     ]
 
     st.sidebar.markdown('''
