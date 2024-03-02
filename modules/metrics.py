@@ -150,15 +150,15 @@ def calculate_week_month_metric(df, period):
 	]
 
 	# Calculate distinct counts for 'Approved' and 'Rejected'
-	approved_counts = filtered_df[filtered_df['approval_status'] == 'Approved'].groupby(['validated_by', 'week_month'])["meter_no"].nunique()
-	rejected_counts = filtered_df[filtered_df['approval_status'] == 'Rejected'].groupby(['validated_by', 'week_month'])["meter_no"].nunique()
+	approved_counts = filtered_df[filtered_df['approval_status'] == 'Approved'].groupby(['validated_by_email', 'week_month'])["meter_no"].nunique()
+	rejected_counts = filtered_df[filtered_df['approval_status'] == 'Rejected'].groupby(['validated_by_email', 'week_month'])["meter_no"].nunique()
 
 	# Fill missing values with 0
 	approved_counts = approved_counts.unstack().fillna(0)
 	rejected_counts = rejected_counts.unstack().fillna(0)
 
 	pivot_ac_no_slrn = filtered_df.pivot_table(
-		index='validated_by',
+		index='validated_by_email',
 		columns='week_month',
 		values=["meter_no", 'slrn'],
 		aggfunc={"meter_no": pd.Series.nunique, 'slrn': 'nunique'},
@@ -175,7 +175,7 @@ def calculate_week_month_metric(df, period):
 	# Combine the two pivot tables
 	pivot = pd.concat([pivot_ac_no_slrn, pivot_approved_rejected], axis=1)
 
-	pivot = pivot.rename_axis(index={'week_month': 'Week - Month', 'validated_by': 'Validator'})
+	pivot = pivot.rename_axis(index={'week_month': 'Week - Month', 'validated_by_email': 'Validator'})
 	pivot = pivot.rename(columns={"meter_no": 'Customers', 'slrn': 'Buildings'})
 
 	pivot.columns.names = [None] * len(pivot.columns.names)
@@ -190,7 +190,7 @@ def display_weekly_results(df, container_width):
     gb = GridOptionsBuilder()
 
     gb.configure_column(
-        field="validated_by",
+        field="validated_by_email",
         header_name="Validated By",
         width=100,
         pivot=True,
@@ -363,19 +363,19 @@ def display_main_tab(df):
 		approved_df = df[df['approval_status'] == 'Approved']
 		rejected_df = df[df['approval_status'] == 'Rejected']
 
-		source_pivot = df.pivot_table(index="validated_by", values=['slrn', "meter_no"], aggfunc={"slrn": "nunique", "meter_no": "nunique"}, margins=False, margins_name='Total')
+		source_pivot = df.pivot_table(index="validated_by_email", values=['slrn', "meter_no"], aggfunc={"slrn": "nunique", "meter_no": "nunique"}, margins=False, margins_name='Total')
 		source_pivot = source_pivot.rename(columns={"slrn": "Buildings", "meter_no": "Customers"})
 
-		source_pivot['Approved'] = approved_df.groupby('validated_by')["meter_no"].nunique()
-		source_pivot['Rejected'] = rejected_df.groupby('validated_by')["meter_no"].nunique()
+		source_pivot['Approved'] = approved_df.groupby('validated_by_email')["meter_no"].nunique()
+		source_pivot['Rejected'] = rejected_df.groupby('validated_by_email')["meter_no"].nunique()
 
 		source_pivot = source_pivot.fillna(0)
-		source_pivot = source_pivot.rename_axis(index={'validated_by': 'Validator'})
+		source_pivot = source_pivot.rename_axis(index={'validated_by_email': 'Validator'})
 
 		gb = GridOptionsBuilder()
 
 		gb.configure_column(
-			field="validated_by",
+			field="validated_by_email",
 			header_name="Validated By",
 			width=100,
 			pivot=True,
@@ -471,16 +471,16 @@ def display_filtered_tab(df, df_selection):
 		if df_selection is None:
 			st.markdown("#### (No data available)")
 		else:
-			filtered_source_pivot = df_selection.pivot_table(index="validated_by", values=['slrn', "meter_no"], aggfunc={"slrn": "nunique", "meter_no": "nunique"}, margins=False, margins_name='Total', fill_value=0)
+			filtered_source_pivot = df_selection.pivot_table(index="validated_by_email", values=['slrn', "meter_no"], aggfunc={"slrn": "nunique", "meter_no": "nunique"}, margins=False, margins_name='Total', fill_value=0)
 			filtered_source_pivot = filtered_source_pivot.rename(columns={"slrn": "Buildings", "meter_no": "Customers"})
 
 			# Calculate the unique counts for Approved and Rejected
-			filtered_source_pivot['Approved'] = approved_df_selection.groupby('validated_by')["meter_no"].nunique()
-			filtered_source_pivot['Rejected'] = rejected_df_selection.groupby('validated_by')["meter_no"].nunique()
+			filtered_source_pivot['Approved'] = approved_df_selection.groupby('validated_by_email')["meter_no"].nunique()
+			filtered_source_pivot['Rejected'] = rejected_df_selection.groupby('validated_by_email')["meter_no"].nunique()
 
 			# Fill NaN values with 0
 			filtered_source_pivot = filtered_source_pivot.fillna(0)
-			filtered_source_pivot = filtered_source_pivot.rename_axis(index={'validated_by': 'Validator'})
+			filtered_source_pivot = filtered_source_pivot.rename_axis(index={'validated_by_email': 'Validator'})
 
 			# Display the pivot table
 			st.markdown("<div style='text-align:center; font-size:15px; font-weight:bold;'>Customer-Building Breakdown By Validator (Filtered)</div>", unsafe_allow_html=True)
