@@ -4,6 +4,7 @@ from streamlit_extras.metric_cards import style_metric_cards
 
 from modules.connection_ecg import *
 from modules.connection_aedc import *
+from modules.connection_caims_v2 import *
 from modules.data import *
 from modules.filter import filter_data
 from modules.menu import streamlit_menu
@@ -28,7 +29,7 @@ def load_data(dashboard_type):
     if dashboard_type == 'ECG':
         nw_cus_df = get_ecg_nw_cus_data_from_database()
         ex_cus_df = get_ecg_ex_cus_data_from_database()
-        v2_cus_df = get_ecg_cus_data_from_database()
+        v2_cus_df = get_cus_data_from_database()
     elif dashboard_type == 'AEDC':
         nw_cus_df = get_aedc_nw_cus_data_from_database()
         ex_cus_df = get_aedc_ex_cus_data_from_database()

@@ -38,5 +38,5 @@ def get_cus_data_from_database():
 	cus_df['week_month'] = cus_df.apply(calculate_week_month, axis=1)
 	cus_df['week_month_year'] = cus_df.apply(calculate_week_month_year, axis=1)
 
-	st.success("Fetched CAIMS V2 Customer data from Database!")
+	st.success("Fetched CAIMS V2 data from Database!")
 	return cus_df
