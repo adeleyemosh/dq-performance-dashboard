@@ -232,7 +232,7 @@ def calculate_kpis(df, df_selection=None):
     daily_rate_overall = calculate_daily_rate(df)
     formatted_daily_rate_overall = format_float(daily_rate_overall)
 
-    kpis = {
+    kpis = {	
         "overall_assets_reviewed": overall_assets_reviewed,
         "overall_customers_reviewed": overall_customers_reviewed,
         "overall_assets_approved": overall_assets_approved,
